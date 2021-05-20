@@ -78,6 +78,9 @@ public class BodyEntity3D: Entity, HasAnchoring {
         } else { //trackedJoints does Not contain this joint yet.
             joint = TrackedBodyJoint(jointName: jointName)
             self.addChild(joint)
+            if let jointModelTransforms = ARSkeletonDefinition.defaultBody3D.neutralBodySkeleton3D?.jointModelTransforms{
+                joint.setTransformMatrix(jointModelTransforms[jointName.rawValue], relativeTo: self)
+            }
             trackedJoints.insert(joint)
         }
         joint.addChild(entity)
@@ -239,4 +242,46 @@ public enum ThreeDBodyJoints: Int {
         case right_handThumb_1_joint = 88
         case right_handThumb_2_joint = 89
         case right_handThumbEnd_joint = 90
+    
+    ///Use this function to determine if a particular joint is tracked or untracked.
+    func isTracked() -> Bool {
+        return ThreeDBodyJoints.trackedJoints.contains(self)
+    }
+    ///Not all joints are tracked, but these are.
+    ///
+    ///Tracked joints' transforms (position, rotation, scale) follow the person's body.
+    ///Untracked joints always maintain the same transform relative to their parent joint.
+    ///There are 91 joints total in the skeleton, and 28 are tracked.
+    static var trackedJoints : Set<ThreeDBodyJoints> = [
+        .root,
+        .hips_joint,
+        .left_upLeg_joint,
+        .left_leg_joint,
+        .left_foot_joint,
+        .right_upLeg_joint,
+        .right_leg_joint,
+        .right_foot_joint,
+        .spine_1_joint,
+        .spine_2_joint,
+        .spine_3_joint,
+        .spine_4_joint,
+        .spine_5_joint,
+        .spine_6_joint,
+        .spine_7_joint,
+        .left_shoulder_1_joint,
+        .left_arm_joint,
+        .left_forearm_joint,
+        .left_hand_joint,
+        .neck_1_joint,
+        .neck_2_joint,
+        .neck_3_joint,
+        .neck_4_joint,
+        .head_joint,
+        .right_shoulder_1_joint,
+        .right_arm_joint,
+        .right_forearm_joint,
+        .right_hand_joint
+    ]
+    
+
 }

@@ -22,11 +22,8 @@ class ARSUIView3D: BodyARView {
         do { try runBodyTrackingConfig3D() }
         catch MyError.runtimeError(let errorMessage) {print(errorMessage)}
         catch {}
-        
-        
-        makeRightHandVisible()
 
-        makeOtherJointsVisible()
+        makeTrackedJointsVisible()
     }
     
     
@@ -39,16 +36,10 @@ class ARSUIView3D: BodyARView {
     }
     
     ///This is an example for how to show multiple joints, iteratively.
-    private func makeOtherJointsVisible(){
+    private func makeTrackedJointsVisible(){
         //There are more joints you could attach entities to, I'm just using these.
-        let jointsToShow : [ThreeDBodyJoints] = [.right_forearm_joint,
-                                             .right_shoulder_1_joint, .left_hand_joint,
-                                             .left_forearm_joint, .left_shoulder_1_joint,
-                                             .head_joint, .hips_joint, .right_leg_joint,
-                                             .right_foot_joint, .spine_4_joint, .left_leg_joint,
-                                             .left_foot_joint]
         //Another way to attach entities to the skeletion, but iteratively this time:
-        jointsToShow.forEach { joint in
+        ThreeDBodyJoints.trackedJoints.forEach { joint in
             let sphere = makeSphere(radius: 0.05)
             bodyEntity.attach(thisEntity: sphere, toThisJoint: joint)
         }

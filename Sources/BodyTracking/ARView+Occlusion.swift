@@ -42,7 +42,7 @@ extension ARView {
         self.session.run(config)
     }
     
-    enum MyError: Error {
+    public enum MyError: Error {
         case runtimeError(String)
     }
     public func runBodyTrackingConfig3D() throws {
