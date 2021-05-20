@@ -7,6 +7,7 @@ import Vision
 
 
 //You can track as many hands as you want, or set the maximumHandCount of sampleBufferDelegate's handPoseRequest.
+@available(iOS 14.0, *)
 public class HandTrackedEntity {
     
     
