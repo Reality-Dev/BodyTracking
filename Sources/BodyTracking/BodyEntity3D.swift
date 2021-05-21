@@ -71,7 +71,8 @@ public class BodyEntity3D: Entity, HasAnchoring {
     ///   - entity: The entity to attach.
     ///   - jointName: The joint to attach the entity to.
     public func attach(thisEntity entity: Entity,
-                toThisJoint jointName: ThreeDBodyJoints){
+                toThisJoint jointName: ThreeDBodyJoints,
+                preservingWorldTransform: Bool = false){
         let joint: TrackedBodyJoint
         if let jointLocal = trackedJoints.first(where: {$0.jointName == jointName}){
             joint = jointLocal
@@ -83,7 +84,7 @@ public class BodyEntity3D: Entity, HasAnchoring {
             }
             trackedJoints.insert(joint)
         }
-        joint.addChild(entity)
+        joint.addChild(entity, preservingWorldTransform: preservingWorldTransform)
     }
     
     ///Removes this joint and all attached entities.
@@ -129,7 +130,7 @@ public class BodyEntity3D: Entity, HasAnchoring {
 
 
 
-class TrackedBodyJoint: Entity {
+public class TrackedBodyJoint: Entity {
     
     var jointName: ThreeDBodyJoints!
     
@@ -244,7 +245,7 @@ public enum ThreeDBodyJoints: Int {
         case right_handThumbEnd_joint = 90
     
     ///Use this function to determine if a particular joint is tracked or untracked.
-    func isTracked() -> Bool {
+    public func isTracked() -> Bool {
         return ThreeDBodyJoints.trackedJoints.contains(self)
     }
     ///Not all joints are tracked, but these are.
@@ -252,7 +253,7 @@ public enum ThreeDBodyJoints: Int {
     ///Tracked joints' transforms (position, rotation, scale) follow the person's body.
     ///Untracked joints always maintain the same transform relative to their parent joint.
     ///There are 91 joints total in the skeleton, and 28 are tracked.
-    static var trackedJoints : Set<ThreeDBodyJoints> = [
+    public static var trackedJoints : Set<ThreeDBodyJoints> = [
         .root,
         .hips_joint,
         .left_upLeg_joint,

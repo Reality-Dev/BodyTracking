@@ -20,7 +20,7 @@ class ARSUIView3D: BodyARView {
         self.bodyEntity = BodyEntity3D(arView: self)
         
         do { try runBodyTrackingConfig3D() }
-        catch MyError.runtimeError(let errorMessage) {print(errorMessage)}
+        catch BodyTrackingError.runtimeError(let errorMessage) {print(errorMessage)}
         catch {}
 
         makeTrackedJointsVisible()

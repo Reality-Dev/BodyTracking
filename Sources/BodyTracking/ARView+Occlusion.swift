@@ -42,7 +42,7 @@ extension ARView {
         self.session.run(config)
     }
     
-    public enum MyError: Error {
+    public enum BodyTrackingError: Error {
         case runtimeError(String)
     }
     public func runBodyTrackingConfig3D() throws {
@@ -50,7 +50,7 @@ extension ARView {
         // If the iOS device doesn't support body tracking, raise a developer error for
         // this unhandled case.
         guard ARBodyTrackingConfiguration.isSupported else {
-            throw MyError.runtimeError("This device does Not support body tracking. This feature is only supported on devices with an A12 chip.")
+            throw BodyTrackingError.runtimeError("This device does Not support body tracking. This feature is only supported on devices with an A12 chip.")
         }
         
         let config3D = ARBodyTrackingConfiguration()
