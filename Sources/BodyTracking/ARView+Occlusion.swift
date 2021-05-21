@@ -50,7 +50,10 @@ extension ARView {
         // If the iOS device doesn't support body tracking, raise a developer error for
         // this unhandled case.
         guard ARBodyTrackingConfiguration.isSupported else {
-            throw BodyTrackingError.runtimeError("This device does Not support body tracking. This feature is only supported on devices with an A12 chip.")
+            showAlert(title: "Uh oh...", message: "This device does Not support body tracking.")
+            let errorMessage = "This device does Not support body tracking. This feature is only supported on devices with an A12 chip."
+            print(errorMessage)
+            throw BodyTrackingError.runtimeError(errorMessage)
         }
         
         let config3D = ARBodyTrackingConfiguration()
@@ -65,5 +68,14 @@ extension ARView {
     }
     
     
-    
+}
+
+extension UIView {
+    public func showAlert(title: String, message: String){
+        guard UIApplication.shared.windows.count == 1 else { return}
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Dismiss", style: .default, handler: nil))
+        //arView.window is nil the way we have set up this example project.
+        UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true, completion: nil)
+    }
 }
