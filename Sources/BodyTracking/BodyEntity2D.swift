@@ -6,6 +6,22 @@ import ARKit
 import UIKit
 
 
+
+extension ARView {
+    public func runBodyTrackingConfig2D() throws {
+        //This is more efficient if you are just using 2D and Not 3D tracking.
+        guard ARWorldTrackingConfiguration.supportsFrameSemantics(.bodyDetection) else {
+            let errorMessage = "This device does Not support body detection."
+            print(errorMessage)
+            throw BodyTrackingError.runtimeError(errorMessage)
+        }
+        let config2D = ARWorldTrackingConfiguration()
+        config2D.frameSemantics = .bodyDetection
+        self.session.run(config2D)
+    }
+}
+
+
 public class BodyEntity2D {
     weak var arView : ARView!
     
@@ -17,7 +33,7 @@ public class BodyEntity2D {
         self.populateJointPositions()
     }
     
-    private var jointScreenPositions : [CGPoint]!
+    public var jointScreenPositions : [CGPoint]!
     
 
     public var trackedViews = [TwoDBodyJoints : UIView]()

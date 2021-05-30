@@ -27,6 +27,14 @@ class ARSUIViewHandTracking: BodyARView {
     
     required init(frame frameRect: CGRect) {
         super.init(frame: frameRect)
+        guard #available(iOS 14, *) else {
+            let title = "Uh oh..."
+            let errorMessage = "Hand tracking requires iOS 14.0 or later"
+            print(errorMessage)
+            showAlert(title: title, message: errorMessage)
+            return
+        }
+        
         self.handTrackedEntity = HandTrackedEntity(arView: self)
         
         makeHandJointsVisible()
@@ -38,7 +46,7 @@ class ARSUIViewHandTracking: BodyARView {
         
         //Another way to attach views to the skeletion, but iteratively this time:
         handTrackedEntity.allHandJoints.forEach { joint in
-            let circle = makeCircle(circleRadius: 20, color: #colorLiteral(red: 1, green: 0.1491314173, blue: 0, alpha: 1))
+            let circle = makeCircle(circleRadius: 20, color: #colorLiteral(red: 0, green: 0.9768045545, blue: 0, alpha: 1))
             self.handTrackedEntity.attach(thisView: circle, toThisJoint: joint)
             self.addSubview(circle)
         }

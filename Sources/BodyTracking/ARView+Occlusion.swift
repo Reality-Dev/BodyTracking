@@ -14,8 +14,13 @@ extension ARView {
     
     /// Use this function to enable person segmentation occlusion
     /// - Parameter withDepth: If withDepth is false, then a person always shows up in front of virtual content, no matter how far away the person or the content is. If withDepth is true, then the person shows up in front only where it is judged to be *closer* to the camera than the virtual content.
-    func enableOcclusion(withDepth: Bool = true) {
+    func enableOcclusion(withDepth: Bool = true) throws {
         var config: ARConfiguration
+        guard ARWorldTrackingConfiguration.supportsFrameSemantics(.personSegmentation) else {
+            let errorMessage = "This device does Not support person segmentation."
+            print(errorMessage)
+            throw BodyTrackingError.runtimeError(errorMessage)
+        }
         if let configuration = self.session.configuration {
             config = configuration
         } else {
@@ -45,30 +50,9 @@ extension ARView {
     public enum BodyTrackingError: Error {
         case runtimeError(String)
     }
-    public func runBodyTrackingConfig3D() throws {
-        
-        // If the iOS device doesn't support body tracking, raise a developer error for
-        // this unhandled case.
-        guard ARBodyTrackingConfiguration.isSupported else {
-            showAlert(title: "Uh oh...", message: "This device does Not support body tracking.")
-            let errorMessage = "This device does Not support body tracking. This feature is only supported on devices with an A12 chip."
-            print(errorMessage)
-            throw BodyTrackingError.runtimeError(errorMessage)
-        }
-        
-        let config3D = ARBodyTrackingConfiguration()
-        self.session.run(config3D)
-    }
-    
-    public func runBodyTrackingConfig2D(){
-        //This is more efficient if you are just using 2D and Not 3D tracking.
-        let config2D = ARWorldTrackingConfiguration()
-        config2D.frameSemantics = .bodyDetection
-        self.session.run(config2D)
-    }
-    
-    
 }
+
+
 
 extension UIView {
     public func showAlert(title: String, message: String){
@@ -78,4 +62,15 @@ extension UIView {
         //arView.window is nil the way we have set up this example project.
         UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true, completion: nil)
     }
+}
+
+
+import simd
+public extension float4x4 {
+  var translation: SIMD3<Float> {
+    get {
+      let translation = columns.3
+      return SIMD3<Float>(translation.x, translation.y, translation.z)
+    }
+  }
 }

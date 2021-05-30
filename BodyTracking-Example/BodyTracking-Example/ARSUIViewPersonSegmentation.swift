@@ -18,7 +18,8 @@ class ARSUIViewPersonSegmentation: BodyARView {
         super.init(frame: frameRect)
 
         //Use this function to enable person segmentation occlusion.
-        self.enableOcclusion()
+        guard let _ = try? self.enableOcclusion() else { return }
+        
         
         //Create a background so we can see the person segmentation working.
         createBackground()

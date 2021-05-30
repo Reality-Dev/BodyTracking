@@ -24,7 +24,7 @@ class ARSUIViewFace: BodyARView {
         super.init(frame: frameRect)
         self.faceEntity = FaceEntity(arView: self)
         self.session.delegate = self
-        runFaceTrackingConfig()
+        guard let _ = try? runFaceTrackingConfig() else { return }
         makeFace()
     }
 
@@ -37,17 +37,7 @@ class ARSUIViewFace: BodyARView {
             self.faceEntity = nil
     }
     
-    private func runFaceTrackingConfig(){
-        
-        // If the iOS device doesn't support body tracking, raise a developer error for
-        // this unhandled case.
-        guard ARFaceTrackingConfiguration.isSupported else {
-            fatalError("Face tracking is Not supported on this device")
-        }
-        
-        let config3D = ARFaceTrackingConfiguration()
-        self.session.run(config3D)
-    }
+
     
     
     private func makeFace(){

@@ -32,7 +32,7 @@ class ARSUIView2D: BodyARView {
     required init(frame frameRect: CGRect) {
         super.init(frame: frameRect)
         self.bodyEntity = BodyEntity2D(arView: self)
-        runBodyTrackingConfig2D()
+        guard let _ = try? runBodyTrackingConfig2D() else { return }
         self.session.delegate = self
         
         makeRightElbowJointVisible()
