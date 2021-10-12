@@ -10,7 +10,6 @@ import Vision
 @available(iOS 14.0, *)
 public class HandTrackedEntity {
     
-    
     weak var arView : ARView!
     
     public typealias HandJointName = VNHumanHandPoseObservation.JointName
@@ -21,13 +20,16 @@ public class HandTrackedEntity {
     
     private var frameInt = 0
     
-    public required init(arView: ARView) {
+    public required init(arView: ARView, confidenceThreshold: Float = 0.4) {
         self.arView = arView
         self.subscribeToUpdates()
         self.populateJointPositions()
-        self.sampleBufferDelegate = SampleBufferDelegate(handTrackedEntity: self)
+        self.sampleBufferDelegate = SampleBufferDelegate(handTrackedEntity: self,
+                                                         confidenceThreshold: confidenceThreshold)
     }
-    fileprivate var jointScreenPositions : [HandJointName : CGPoint]!
+    
+    public fileprivate(set) var jointScreenPositions : [HandJointName : CGPoint]!
+    
     public let allHandJoints : Set<HandJointName> = [
         .thumbTip, .thumbIP, .thumbMP, .thumbCMC,
         .indexTip, .indexDIP, .indexPIP, .indexMCP,
@@ -84,23 +86,25 @@ public class HandTrackedEntity {
     }
     
     //Run this code every frame to get the joints.
-    public func updateBody(event: SceneEvents.Update? = nil) {
+    private func updateBody(event: SceneEvents.Update? = nil) {
         guard
             let frame = self.arView.session.currentFrame
         else {return}
         
-        //A better way to do it is to keep the buffer full until the request finishes and then set the buffer to nil and process the next request.
+        //Another way to do it is to keep the buffer full until the request finishes and then set the buffer to nil and process the next request.
         if frameInt == 4 {
             sampleBufferDelegate.runFingerDetection(frame: frame)
-            updateTrackedViews(frame: frame)
             frameInt = 0
         } else {
             frameInt += 1
         }
+        
+        updateTrackedViews(frame: frame)
 
     }
     
     private func updateTrackedViews(frame: ARFrame){
+
         guard
               jointScreenPositions.count > 0
         else {return}
@@ -108,15 +112,17 @@ public class HandTrackedEntity {
         for view in trackedViews {
             let jointIndex = view.key
             if let screenPosition = jointScreenPositions[jointIndex] {
-                view.value.center = screenPosition
+                //Interpolate between where the view is and the target location.
+                //We do not run the Vision request every frame, so we need to animate the view in between those frames.
+                let viewCenter = view.value.center
+                let difference = screenPosition - viewCenter
+                    view.value.center = viewCenter + (difference  * 0.5)
             }
         }
     }
-
-  
-
-    
 }
+
+
 
 
 
@@ -127,8 +133,11 @@ class SampleBufferDelegate {
     ///You can track as many hands as you want, or set the maximumHandCount
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     
-    init(handTrackedEntity: HandTrackedEntity) {
+    private var confidenceThreshold: Float!
+    
+    init(handTrackedEntity: HandTrackedEntity, confidenceThreshold: Float) {
         self.handTrackedEntity = handTrackedEntity
+        self.confidenceThreshold = confidenceThreshold
     }
     
     func runFingerDetection(frame: ARFrame){
@@ -149,7 +158,7 @@ class SampleBufferDelegate {
             let fingerPoints = try observation.recognizedPoints(.all)
 
             for point in fingerPoints {
-                guard point.value.confidence > 0.4 else {continue}
+                guard point.value.confidence > confidenceThreshold else {continue}
                 let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
                 let avPoint = convertVisionToAVFoundation(cgPoint)
                 let screenSpacePoint = convertAVFoundationToScreenSpace(avPoint)

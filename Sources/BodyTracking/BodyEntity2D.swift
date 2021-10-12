@@ -187,14 +187,39 @@ public class BodyEntity2D {
     
 }
 
-extension CGPoint {
-    
-    static func -(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
-        return CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
-    }
-    
+public extension CGPoint {
+
     func simdVect() -> simd_float2 {
         return simd_float2(Float(self.x), Float(self.y))
+    }
+    
+    /// Extracts the screen space point from a vector returned by SCNView.projectPoint(_:).
+    init(_ vector: SCNVector3) {
+        self.init(x: CGFloat(vector.x), y: CGFloat(vector.y))
+    }
+    
+    static func -(lhs: CGPoint, rhs: CGPoint) -> CGPoint{
+        return CGPoint(x: lhs.x - rhs.x,
+                       y: lhs.y - rhs.y)
+    }
+    
+    static func +(lhs: CGPoint, rhs: CGPoint) -> CGPoint{
+        return CGPoint(x: lhs.x + rhs.x,
+                       y: lhs.y + rhs.y)
+    }
+    
+    static func *(lhs: CGPoint, rhs: CGFloat) -> CGPoint{
+        return CGPoint(x: lhs.x * rhs,
+                       y: lhs.y * rhs)
+    }
+    static func /(lhs: CGPoint, rhs: CGFloat) -> CGPoint{
+        return CGPoint(x: lhs.x / rhs,
+                       y: lhs.y / rhs)
+    }
+
+    /// Returns the length of a point when considered as a vector. (Used with gesture recognizers.)
+    var length: CGFloat {
+        return sqrt(x * x + y * y)
     }
 }
 

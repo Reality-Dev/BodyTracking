@@ -38,6 +38,10 @@ class ARSUIViewBodyTrackedEntity: BodyARView {
         //Load and show the robot.
         BodyTrackedEntity.loadCharacterAsync(named: "robotWhite"){ robot in
             print("Loaded \"robotWhite\"")
+            print(robot)
+            if let modelComp = robot.components[ModelComponent.self] as? ModelComponent {
+                print(modelComp.materials)
+            }
             self.robot = robot
             self.bodyAnchor.addChild(robot)
         }
@@ -62,3 +66,27 @@ class ARSUIViewBodyTrackedEntity: BodyARView {
        }
     
 }
+
+
+extension Entity {
+    ///Recursively searches through all descendants for a ModelEntity, Not just through the direct children.
+    ///Reutrns the first model entity it finds.
+    ///Returns the input entity if it is a model entity.
+    func findModelEntity() -> ModelEntity? {
+        if self is HasModel { return self as? ModelEntity }
+        
+        guard let modelEntities = self.children.filter({$0 is HasModel}) as? [ModelEntity] else {return nil}
+        
+        if !(modelEntities.isEmpty) { //it's Not empty. We found at least one modelEntity.
+            
+            return modelEntities[0]
+            
+        } else { //it is empty. We did Not find a modelEntity.
+            //every time we check a child, we also iterate through its children if our result is still nil.
+            for child in self.children{
+                
+                if let result = child.findModelEntity(){
+                    return result
+                }}}
+        return nil //default
+    }}
