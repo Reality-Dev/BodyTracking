@@ -28,6 +28,8 @@ public class HandTrackedEntity {
                                                          confidenceThreshold: confidenceThreshold)
     }
     
+    public fileprivate(set) var handIsRecognized = false
+    
     public fileprivate(set) var jointScreenPositions : [HandJointName : CGPoint]!
     
     public let allHandJoints : Set<HandJointName> = [
@@ -151,7 +153,13 @@ class SampleBufferDelegate {
             // Continue only when a hand was detected in the frame.
             // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
             guard let observation = handPoseRequest.results?.first else {
+                if handTrackedEntity.handIsRecognized == true {
+                    handTrackedEntity.handIsRecognized = false
+                }
                 return
+            }
+            if handTrackedEntity.handIsRecognized == false {
+                handTrackedEntity.handIsRecognized = true
             }
             // Get points for thumb and index finger.
             //let thumbPoints = try observation.recognizedPoints(.thumb)
