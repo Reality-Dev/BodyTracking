@@ -34,6 +34,11 @@ class ARSUIViewHandTracking: BodyARView {
             showAlert(title: title, message: errorMessage)
             return
         }
+    }
+    
+    override func didMoveToSuperview() {
+        super.didMoveToSuperview()
+        
         
         self.handTrackedEntity = HandTrackedEntity(arView: self)
         

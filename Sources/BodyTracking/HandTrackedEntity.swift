@@ -18,14 +18,30 @@ public class HandTrackedEntity {
     
     private var sampleBufferDelegate : SampleBufferDelegate!
     
+    public enum RequestRate: Int {
+        case everyFrame = 1
+        case half = 2
+        case quarter = 4
+    }
+    
+    ///The frequency that the Vision request for detecting hands will be performed.
+    ///
+    ///Running the request every frame may decrease performance.
+    ///Can be reduced to increase performance at the cost of choppy tracking.
+    ///Set to half to run every other frame. Set to quarter to run every 1 out of 4 frames.
+    public var requestRate: RequestRate = .half
+    
     private var frameInt = 0
     
-    public required init(arView: ARView, confidenceThreshold: Float = 0.4) {
+    public required init(arView: ARView,
+                         confidenceThreshold: Float = 0.4,
+                         maximumHandCount: Int = 1) {
         self.arView = arView
         self.subscribeToUpdates()
         self.populateJointPositions()
         self.sampleBufferDelegate = SampleBufferDelegate(handTrackedEntity: self,
-                                                         confidenceThreshold: confidenceThreshold)
+                                                         confidenceThreshold: confidenceThreshold,
+                                                         maximumHandCount: maximumHandCount)
     }
     
     public fileprivate(set) var handIsRecognized = false
@@ -94,7 +110,7 @@ public class HandTrackedEntity {
         else {return}
         
         //Another way to do it is to keep the buffer full until the request finishes and then set the buffer to nil and process the next request.
-        if frameInt == 4 {
+        if frameInt == self.requestRate.rawValue {
             sampleBufferDelegate.runFingerDetection(frame: frame)
             frameInt = 0
         } else {
@@ -114,11 +130,18 @@ public class HandTrackedEntity {
         for view in trackedViews {
             let jointIndex = view.key
             if let screenPosition = jointScreenPositions[jointIndex] {
+
+                let viewCenter = view.value.center
+                switch requestRate {
+                case .everyFrame:
+                    view.value.center = screenPosition
+                    
                 //Interpolate between where the view is and the target location.
                 //We do not run the Vision request every frame, so we need to animate the view in between those frames.
-                let viewCenter = view.value.center
-                let difference = screenPosition - viewCenter
+                case .half, .quarter:
+                    let difference = screenPosition - viewCenter
                     view.value.center = viewCenter + (difference  * 0.5)
+                }
             }
         }
     }
@@ -137,9 +160,12 @@ class SampleBufferDelegate {
     
     private var confidenceThreshold: Float!
     
-    init(handTrackedEntity: HandTrackedEntity, confidenceThreshold: Float) {
+    init(handTrackedEntity: HandTrackedEntity,
+         confidenceThreshold: Float,
+         maximumHandCount: Int) {
         self.handTrackedEntity = handTrackedEntity
         self.confidenceThreshold = confidenceThreshold
+        handPoseRequest.maximumHandCount = maximumHandCount
     }
     
     func runFingerDetection(frame: ARFrame){
