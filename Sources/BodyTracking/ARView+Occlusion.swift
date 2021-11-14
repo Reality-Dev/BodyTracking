@@ -54,23 +54,4 @@ extension ARView {
 
 
 
-extension UIView {
-    public func showAlert(title: String, message: String){
-        guard UIApplication.shared.windows.count == 1 else { return}
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Dismiss", style: .default, handler: nil))
-        //arView.window is nil the way we have set up this example project.
-        UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true, completion: nil)
-    }
-}
 
-
-import simd
-public extension float4x4 {
-  var translation: SIMD3<Float> {
-    get {
-      let translation = columns.3
-      return SIMD3<Float>(translation.x, translation.y, translation.z)
-    }
-  }
-}

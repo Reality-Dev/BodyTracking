@@ -37,15 +37,8 @@ public class BodyEntity3D: Entity, HasAnchoring {
 
     private var trackedJoints = Set<TrackedBodyJoint>()
     
-    public var usesSmoothing: Bool! {
-        didSet {
-            if usesSmoothing {
-                setUpSmoothing()
-            } else {
-                removeSmoothing()
-            }
-        }
-    }
+    ///An amount, from 0 to 1, that the joint movements are smoothed by.
+    public var smoothingAmount: Float = 0
     
     public var usesOcclusionShapes: Bool! {
         didSet {
@@ -59,10 +52,10 @@ public class BodyEntity3D: Entity, HasAnchoring {
     
     public required init(arView: ARView,
                   usesOcclusionShapes: Bool = true,
-                  usesSmoothing: Bool = false) {
+                         smoothingAmount: Float = 0) {
         self.arView = arView
         self.usesOcclusionShapes = usesOcclusionShapes
-        self.usesSmoothing = usesSmoothing
+        self.smoothingAmount = smoothingAmount.clamped(0, 0.9999)
         super.init()
         //This will automatically attach this entity to the body.
         self.anchoring = AnchoringComponent(.body)
@@ -131,22 +124,32 @@ public class BodyEntity3D: Entity, HasAnchoring {
     private func updateJointsWith(arBodyAnchor: ARBodyAnchor){
         for trackedJoint in trackedJoints {
             let jointIndex = trackedJoint.jointName.rawValue
-            trackedJoint.setTransformMatrix(arBodyAnchor.skeleton.jointModelTransforms[jointIndex], relativeTo: self)
-//            print("Now updating \(trackedJoint.jointName.rawValue)")
+            let newTransform = arBodyAnchor.skeleton.jointModelTransforms[jointIndex]
+            if self.smoothingAmount == 0 {
+                trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
+            } else {
+                smoothMotion(trackedJoint: trackedJoint, newTransform: newTransform)
+            }
         }
     }
     
+    func smoothMotion(trackedJoint: TrackedBodyJoint, newTransform: simd_float4x4){
+
+        //Scale isn't changing for body joints, so don't smooth that.
+        
+        let newOrientation = simd_slerp(trackedJoint.orientation, newTransform.orientation, self.smoothingAmount)
+
+        //Weight the old translation more than the new translation.
+        let newTranslation = newTransform.translation.smoothed(oldVal: trackedJoint.position, amount: self.smoothingAmount)
+            
+        let newTransform = Transform(scale: .one, rotation: newOrientation, translation: newTranslation).matrix
+        trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
+    }
     
     func setUpOcclusion(){
         
     }
     func removeOcclusion(){
-        
-    }
-    func setUpSmoothing(){
-        
-    }
-    func removeSmoothing(){
         
     }
 }

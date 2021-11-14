@@ -33,7 +33,7 @@ public class BodyEntity2D {
         self.populateJointPositions()
     }
     
-    public var jointScreenPositions : [CGPoint]!
+    public private(set) var jointScreenPositions : [CGPoint]!
     
 
     public var trackedViews = [TwoDBodyJoints : UIView]()

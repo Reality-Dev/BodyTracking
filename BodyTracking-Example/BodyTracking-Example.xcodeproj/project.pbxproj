@@ -29,6 +29,7 @@
 		55BFE6A025D2268B00E2BB8C /* ARSUIView3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55BFE69825D2268B00E2BB8C /* ARSUIView3D.swift */; };
 		55BFE6A125D2268B00E2BB8C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55BFE69925D2268B00E2BB8C /* AppDelegate.swift */; };
 		55BFE6A225D2268B00E2BB8C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55BFE69A25D2268B00E2BB8C /* ContentView.swift */; };
+		55D7BA9627409C9C000E4569 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55D7BA9527409C9C000E4569 /* Utilities.swift */; };
 		55DFE044265480EC001A951B /* ARSUIViewFace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55DFE043265480EC001A951B /* ARSUIViewFace.swift */; };
 /* End PBXBuildFile section */
 
@@ -57,6 +58,7 @@
 		55BFE69925D2268B00E2BB8C /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		55BFE69A25D2268B00E2BB8C /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		55BFE69B25D2268B00E2BB8C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		55D7BA9527409C9C000E4569 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		55DFE043265480EC001A951B /* ARSUIViewFace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ARSUIViewFace.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -75,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				550F68DD2655FE03003F2808 /* BodyEntity3D.swift */,
+				55D7BA9527409C9C000E4569 /* Utilities.swift */,
 				550F68E02655FE03003F2808 /* BodyEntity2D.swift */,
 				550F68DF2655FE03003F2808 /* HandTrackedEntity.swift */,
 				550F68DE2655FE03003F2808 /* ARView+Occlusion.swift */,
@@ -243,6 +246,7 @@
 				55600DCC263E893900D0D54E /* ARSUIViewBodyTrackedEntity.swift in Sources */,
 				55BFE69C25D2268B00E2BB8C /* Model.swift in Sources */,
 				550F68E62655FE03003F2808 /* BodyEntity2D.swift in Sources */,
+				55D7BA9627409C9C000E4569 /* Utilities.swift in Sources */,
 				553CCE78265469030073BA98 /* ARSUIViewHandTracking.swift in Sources */,
 				55AE082A264C2DB800227F35 /* ARSUIViewPersonSegmentation.swift in Sources */,
 				55DFE044265480EC001A951B /* ARSUIViewFace.swift in Sources */,

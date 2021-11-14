@@ -8,7 +8,7 @@ This package includes classes that enable easy, convenient body tracking in Real
 - iOS 13 or macOS 10.15
 - Swift 5.2
 - Xcode 11
-
+- A12 Processor or later.
 
 ## Installation
 
