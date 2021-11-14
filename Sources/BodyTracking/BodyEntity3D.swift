@@ -137,7 +137,7 @@ public class BodyEntity3D: Entity, HasAnchoring {
 
         //Scale isn't changing for body joints, so don't smooth that.
         
-        let newOrientation = simd_slerp(trackedJoint.orientation, newTransform.orientation, self.smoothingAmount)
+        let newOrientation = simd_slerp(trackedJoint.orientation, newTransform.orientation, (1 - self.smoothingAmount))
 
         //Weight the old translation more than the new translation.
         let newTranslation = newTransform.translation.smoothed(oldVal: trackedJoint.position, amount: self.smoothingAmount)
