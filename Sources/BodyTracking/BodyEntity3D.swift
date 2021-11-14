@@ -40,6 +40,9 @@ public class BodyEntity3D: Entity, HasAnchoring {
     ///An amount, from 0 to 1, that the joint movements are smoothed by.
     public var smoothingAmount: Float = 0
     
+    ///An AnchorEntity targeting a body (at the hip joint) is not smoothed automatically, so we just this instead.
+    private var smoothedHip = Entity()
+    
     public var usesOcclusionShapes: Bool! {
         didSet {
             if usesOcclusionShapes {
@@ -57,8 +60,9 @@ public class BodyEntity3D: Entity, HasAnchoring {
         self.usesOcclusionShapes = usesOcclusionShapes
         self.smoothingAmount = smoothingAmount.clamped(0, 0.9999)
         super.init()
-        //This will automatically attach this entity to the body.
-        self.anchoring = AnchoringComponent(.body)
+        //Position 0,0,0 in world space.
+        self.anchoring = AnchoringComponent(.world(transform: .init(diagonal: [1,1,1,1])))
+        self.addChild(smoothedHip)
         self.arView.scene.addAnchor(self)
         self.subscribeToUpdates()
     }
@@ -94,7 +98,7 @@ public class BodyEntity3D: Entity, HasAnchoring {
             joint = jointLocal
         } else { //trackedJoints does Not contain this joint yet.
             joint = TrackedBodyJoint(jointName: jointName)
-            self.addChild(joint)
+            self.smoothedHip.addChild(joint)
             if let jointModelTransforms = ARSkeletonDefinition.defaultBody3D.neutralBodySkeleton3D?.jointModelTransforms{
                 joint.setTransformMatrix(jointModelTransforms[jointName.rawValue], relativeTo: self)
             }
@@ -126,14 +130,35 @@ public class BodyEntity3D: Entity, HasAnchoring {
             let jointIndex = trackedJoint.jointName.rawValue
             let newTransform = arBodyAnchor.skeleton.jointModelTransforms[jointIndex]
             if self.smoothingAmount == 0 {
-                trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
+                smoothedHip.setTransformMatrix(arBodyAnchor.transform, relativeTo: nil)
+                trackedJoint.setTransformMatrix(newTransform, relativeTo: smoothedHip)
             } else {
+                smoothHipMotion(newTransform: arBodyAnchor.transform)
                 smoothMotion(trackedJoint: trackedJoint, newTransform: newTransform)
             }
         }
     }
     
-    func smoothMotion(trackedJoint: TrackedBodyJoint, newTransform: simd_float4x4){
+    private func smoothHipMotion(newTransform: simd_float4x4){
+        
+        //Prevent the object from flying onto the body from 0,0,0 in world space initially.
+        if self.smoothedHip.position(relativeTo: nil) == .zero {
+            smoothedHip.setTransformMatrix(newTransform, relativeTo: nil)
+            return
+        }
+        
+        //The hip joint seemed to require more smoothing than the other joints.
+        let smoothingAmount = (self.smoothingAmount + 0.3).clamped(0.001, 0.99)
+        let newOrientation = simd_slerp(smoothedHip.orientation(relativeTo: nil), newTransform.orientation, (1 - smoothingAmount))
+
+        //Weight the old translation more than the new translation.
+        let newTranslation = newTransform.translation.smoothed(oldVal: smoothedHip.position(relativeTo: nil), amount: smoothingAmount)
+            
+        let newTransform = Transform(scale: .one, rotation: newOrientation, translation: newTranslation).matrix
+        smoothedHip.setTransformMatrix(newTransform, relativeTo: nil)
+    }
+    
+    private func smoothMotion(trackedJoint: TrackedBodyJoint, newTransform: simd_float4x4){
 
         //Scale isn't changing for body joints, so don't smooth that.
         
@@ -143,7 +168,7 @@ public class BodyEntity3D: Entity, HasAnchoring {
         let newTranslation = newTransform.translation.smoothed(oldVal: trackedJoint.position, amount: self.smoothingAmount)
             
         let newTransform = Transform(scale: .one, rotation: newOrientation, translation: newTranslation).matrix
-        trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
+        trackedJoint.setTransformMatrix(newTransform, relativeTo: smoothedHip)
     }
     
     func setUpOcclusion(){
