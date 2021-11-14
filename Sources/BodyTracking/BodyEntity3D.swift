@@ -147,8 +147,6 @@ public class BodyEntity3D: Entity, HasAnchoring {
             return
         }
         
-        //The hip joint seemed to require more smoothing than the other joints.
-        let smoothingAmount = (self.smoothingAmount + 0.3).clamped(0.001, 0.99)
         let newOrientation = simd_slerp(smoothedHip.orientation(relativeTo: nil), newTransform.orientation, (1 - smoothingAmount))
 
         //Weight the old translation more than the new translation.
