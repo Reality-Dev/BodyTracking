@@ -45,7 +45,7 @@ public extension float4x4 {
 }
 
 // MARK: - Comparable extensions
-extension Comparable {
+public extension Comparable {
     
     /// Returns self clamped between two values.
     /// - If self is already between the two input values, returns self. If self is below a, returns a. If self is above b, returns b.

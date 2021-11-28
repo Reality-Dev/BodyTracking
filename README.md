@@ -15,9 +15,12 @@ This package includes classes that enable easy, convenient body tracking in Real
 ### Swift Package Manager
 
 Add the URL of this repository to your Xcode 11+ Project under:
-    File > swift packages > add package dependency
+    File > Add Packages
     `https://github.com/Reality-Dev/BodyTracking`
 
 ## Usage
 
 Add `import BodyTracking` to the top of your swift file to start.
+
+See the [example project](https://github.com/Reality-Dev/BodyTracking/tree/master/BodyTracking-Example) for guidance.
+

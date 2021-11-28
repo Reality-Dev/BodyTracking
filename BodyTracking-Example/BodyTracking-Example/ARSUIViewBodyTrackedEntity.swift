@@ -68,25 +68,22 @@ class ARSUIViewBodyTrackedEntity: BodyARView {
 }
 
 
-extension Entity {
-    ///Recursively searches through all descendants for a ModelEntity, Not just through the direct children.
+public extension Entity {
+    
+    ///Recursively searches through all descendants (depth first) for an Entity that satisfies the given predicate, Not just through the direct children.
+    func findEntity(where predicate: (Entity) -> Bool) -> Entity? {
+        for child in self.children {
+            if predicate(child) { return child }
+            else if let satisfier = child.findEntity(where: predicate) {return satisfier}
+        }
+        return nil
+    }
+    
+    ///Recursively searches through all descendants (depth first) for a ModelEntity, Not just through the direct children.
     ///Reutrns the first model entity it finds.
     ///Returns the input entity if it is a model entity.
     func findModelEntity() -> ModelEntity? {
-        if self is HasModel { return self as? ModelEntity }
-        
-        guard let modelEntities = self.children.filter({$0 is HasModel}) as? [ModelEntity] else {return nil}
-        
-        if !(modelEntities.isEmpty) { //it's Not empty. We found at least one modelEntity.
-            
-            return modelEntities[0]
-            
-        } else { //it is empty. We did Not find a modelEntity.
-            //every time we check a child, we also iterate through its children if our result is still nil.
-            for child in self.children{
-                
-                if let result = child.findModelEntity(){
-                    return result
-                }}}
-        return nil //default
-    }}
+        if self is ModelEntity { return self as? ModelEntity }
+        return self.findEntity(where: {$0 is ModelEntity}) as? ModelEntity
+    }
+}

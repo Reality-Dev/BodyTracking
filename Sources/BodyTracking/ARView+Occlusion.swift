@@ -10,7 +10,7 @@ import ARKit
 
 //This enables or disables person segmentation occlusion.
 //Person segmentation is different from the 3D occlusion shapes inside of ARSUIView3D.
-extension ARView {
+public extension ARView {
     
     /// Use this function to enable person segmentation occlusion
     /// - Parameter withDepth: If withDepth is false, then a person always shows up in front of virtual content, no matter how far away the person or the content is. If withDepth is true, then the person shows up in front only where it is judged to be *closer* to the camera than the virtual content.

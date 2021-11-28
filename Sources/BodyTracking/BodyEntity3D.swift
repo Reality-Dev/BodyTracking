@@ -7,11 +7,11 @@ import Combine
 //and to add occlusion without person segmentation.
 
 
-extension ARView {
+public extension ARView {
     ///If ARBodyTrackingConfiguration is supported on this device, run this type of configuration on this ARView's session.
     ///
     ///If ARBodyTrackingConfiguration is not supported on this device, this function will print an error message, throw an error, and present an alert to the user.
-    public func runBodyTrackingConfig3D() throws {
+    func runBodyTrackingConfig3D() throws {
         
         // If the iOS device doesn't support body tracking, raise an error.
         guard ARBodyTrackingConfiguration.isSupported else {
@@ -78,6 +78,7 @@ public class BodyEntity3D: Entity, HasAnchoring {
       for child in children {
         child.removeFromParent()
       }
+        self.updateCancellable.cancel()
         self.updateCancellable = nil
         self.trackedJoints = []
       self.removeFromParent()

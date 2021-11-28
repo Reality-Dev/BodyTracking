@@ -7,8 +7,8 @@ import UIKit
 
 
 
-extension ARView {
-    public func runBodyTrackingConfig2D() throws {
+public extension ARView {
+    func runBodyTrackingConfig2D() throws {
         //This is more efficient if you are just using 2D and Not 3D tracking.
         guard ARWorldTrackingConfiguration.supportsFrameSemantics(.bodyDetection) else {
             let errorMessage = "This device does Not support body detection."

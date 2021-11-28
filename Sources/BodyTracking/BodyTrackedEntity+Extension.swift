@@ -8,7 +8,7 @@
 
 import RealityKit
 import Combine
-extension BodyTrackedEntity {
+public extension BodyTrackedEntity {
     
     
     /// Asynchronously loads the 3D character.
@@ -18,7 +18,7 @@ extension BodyTrackedEntity {
     /// - Parameters:
     ///   - name: The name of the usdz file in the main bundle.
     ///   - completionHandler: The code to run once the BodyTrackedEntity is done loading. The BodyTrackedEntity is passed in as a parameter.
-    public class func loadCharacterAsync(named name: String, completionHandler: @escaping ((_ character: BodyTrackedEntity) -> Void)){
+    class func loadCharacterAsync(named name: String, completionHandler: @escaping ((_ character: BodyTrackedEntity) -> Void)){
         var myCancellable: AnyCancellable? = nil
         myCancellable = Entity.loadBodyTrackedAsync(named: name).sink(
             receiveCompletion: { completion in

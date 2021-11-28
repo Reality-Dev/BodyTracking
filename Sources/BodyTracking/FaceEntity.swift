@@ -5,7 +5,7 @@ import ARKit
 import UIKit
 
 
-extension ARView {
+public extension ARView {
     
     //To learn more about face tracking:
     //https://developer.apple.com/documentation/arkit/arfacetrackingconfiguration
@@ -14,7 +14,7 @@ extension ARView {
     */
     
     
-    public func runFaceTrackingConfig() throws {
+    func runFaceTrackingConfig() throws {
         
         // If the iOS device doesn't support face tracking, raise an error.
         guard ARFaceTrackingConfiguration.isSupported
