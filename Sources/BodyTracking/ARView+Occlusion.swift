@@ -47,7 +47,7 @@ public extension ARView {
         self.session.run(config)
     }
     
-    public enum BodyTrackingError: Error {
+    enum BodyTrackingError: Error {
         case runtimeError(String)
     }
 }

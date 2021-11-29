@@ -7,6 +7,27 @@
 
 import simd
 import UIKit
+import RealityKit
+
+public extension Entity {
+    
+    ///Recursively searches through all descendants (depth first) for an Entity that satisfies the given predicate, Not just through the direct children.
+    func findEntity(where predicate: (Entity) -> Bool) -> Entity? {
+        for child in self.children {
+            if predicate(child) { return child }
+            else if let satisfier = child.findEntity(where: predicate) {return satisfier}
+        }
+        return nil
+    }
+    
+    ///Recursively searches through all descendants (depth first) for a ModelEntity, Not just through the direct children.
+    ///Reutrns the first model entity it finds.
+    ///Returns the input entity if it is a model entity.
+    func findModelEntity() -> ModelEntity? {
+        if self is ModelEntity { return self as? ModelEntity }
+        return self.findEntity(where: {$0 is ModelEntity}) as? ModelEntity
+    }
+}
 
 public extension UIView {
     func showAlert(title: String, message: String){
