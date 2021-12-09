@@ -24,3 +24,4 @@ Add `import BodyTracking` to the top of your swift file to start.
 
 See the [example project](https://github.com/Reality-Dev/BodyTracking/tree/master/BodyTracking-Example) for guidance.
 
+If you have questions feel free to message me on [GitHub](https://github.com/Reality-Dev) or on [Twitter](https://twitter.com/GMJ4K)

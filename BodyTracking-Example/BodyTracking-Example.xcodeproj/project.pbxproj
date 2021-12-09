@@ -19,6 +19,7 @@
 		553CCE78265469030073BA98 /* ARSUIViewHandTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 553CCE77265469030073BA98 /* ARSUIViewHandTracking.swift */; };
 		55600DCC263E893900D0D54E /* ARSUIViewBodyTrackedEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55600DCB263E893900D0D54E /* ARSUIViewBodyTrackedEntity.swift */; };
 		55600DCF263E8BB700D0D54E /* robotWhite.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 55600DCE263E8BB700D0D54E /* robotWhite.usdz */; };
+		55AA51FE2762BCC200C9D0A8 /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 55AA51FD2762BCC200C9D0A8 /* LICENSE.md */; };
 		55AE082A264C2DB800227F35 /* ARSUIViewPersonSegmentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55AE0829264C2DB800227F35 /* ARSUIViewPersonSegmentation.swift */; };
 		55AE082D264C2DCE00227F35 /* BodyARView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55AE082C264C2DCE00227F35 /* BodyARView.swift */; };
 		55AFF6642612798200D05AE3 /* ARSUIView2D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55AFF6632612798200D05AE3 /* ARSUIView2D.swift */; };
@@ -46,6 +47,7 @@
 		553CCE77265469030073BA98 /* ARSUIViewHandTracking.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ARSUIViewHandTracking.swift; sourceTree = "<group>"; };
 		55600DCB263E893900D0D54E /* ARSUIViewBodyTrackedEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARSUIViewBodyTrackedEntity.swift; sourceTree = "<group>"; };
 		55600DCE263E8BB700D0D54E /* robotWhite.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = robotWhite.usdz; sourceTree = "<group>"; };
+		55AA51FD2762BCC200C9D0A8 /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		55AE0829264C2DB800227F35 /* ARSUIViewPersonSegmentation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ARSUIViewPersonSegmentation.swift; sourceTree = "<group>"; };
 		55AE082C264C2DCE00227F35 /* BodyARView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyARView.swift; sourceTree = "<group>"; };
 		55AFF6632612798200D05AE3 /* ARSUIView2D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ARSUIView2D.swift; sourceTree = "<group>"; };
@@ -107,6 +109,7 @@
 		55BFE65C25D2200F00E2BB8C = {
 			isa = PBXGroup;
 			children = (
+				55AA51FD2762BCC200C9D0A8 /* LICENSE.md */,
 				55BFE69225D2268B00E2BB8C /* BodyTracking-Example */,
 				55BFE66625D2200F00E2BB8C /* Products */,
 			);
@@ -223,6 +226,7 @@
 				55BFE69E25D2268B00E2BB8C /* Preview Assets.xcassets in Resources */,
 				55BF5951261263B300E08319 /* LICENSE1.txt in Resources */,
 				550F68DB2655F555003F2808 /* README.md in Resources */,
+				55AA51FE2762BCC200C9D0A8 /* LICENSE.md in Resources */,
 				551C19CB261253B000530422 /* LICENSE2.txt in Resources */,
 				55600DCF263E8BB700D0D54E /* robotWhite.usdz in Resources */,
 				55BFE69D25D2268B00E2BB8C /* Assets.xcassets in Resources */,
