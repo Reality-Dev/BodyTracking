@@ -2,6 +2,12 @@
 
 This package includes classes that enable easy, convenient body tracking in RealityKit.
 
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/Reality-Dev/BodyTracking?color=orange&display_name=tag&label=SwiftPM&logo=swift&style=plastic"/>
+  <img src="https://img.shields.io/static/v1?label=platform&message=iOS&color=lightgrey&style=plastic"/>
+  <img src="https://img.shields.io/static/v1?label=Swift&message=5.5&color=orange&style=plastic&logo=swift"/>
+</p>
+
 
 ## Requirements
 
