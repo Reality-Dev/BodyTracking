@@ -17,7 +17,8 @@ class ARSUIView3D: BodyARView {
     
     required init(frame frameRect: CGRect) {
         super.init(frame: frameRect)
-        self.bodyEntity = BodyEntity3D(arView: self)
+        self.bodyEntity = BodyEntity3D(arView: self,
+                                       smoothingAmount: 0.7)
         
         do { try runBodyTrackingConfig3D() }
         catch BodyTrackingError.runtimeError(let errorMessage) {print(errorMessage); return}

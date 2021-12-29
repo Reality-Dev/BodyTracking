@@ -66,7 +66,7 @@ class ARSUIViewFace: BodyARView {
 
     private func makeRay()-> Entity{
         let rayMesh = MeshResource.generateBox(size: [0.01, 0.4, 0.01], cornerRadius: 1)
-        let rayMat = SimpleMaterial.init(color: .green, isMetallic: true)
+        let rayMat = UnlitMaterial(color: .green)
         let ray = ModelEntity(mesh: rayMesh, materials: [rayMat])
         let pivotEntity = Entity()
         pivotEntity.addChild(ray)
