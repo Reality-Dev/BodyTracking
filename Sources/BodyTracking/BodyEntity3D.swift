@@ -63,7 +63,7 @@ public class BodyEntity3D: Entity {
         super.init()
         self.arView.scene.addAnchor(sceneAnchor)
         
-        //An AnchorEntity targeting a body (at the hip joint) is not smoothed automatically, so we just this instead.
+        //An AnchorEntity targeting a body (at the hip joint) is not smoothed automatically, so we just use this instead of giving the BodyEntity3D an AnchoringComponent targeting a body.
         sceneAnchor.addChild(self)
 
         self.subscribeToUpdates()

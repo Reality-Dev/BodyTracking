@@ -23,20 +23,23 @@ public extension ARView {
 
 
 public class BodyEntity2D {
+    
     weak var arView : ARView!
     
     private var cancellableForUpdate : Cancellable?
+    
+    public private(set) var jointScreenPositions : [CGPoint]!
+
+    public var trackedViews = [TwoDBodyJoints : UIView]()
+    
+    ///True if a body is detected in the current frame.
+    public private(set) var bodyIsDetected = false
     
     public required init(arView: ARView) {
         self.arView = arView
         self.subscribeToUpdates()
         self.populateJointPositions()
     }
-    
-    public private(set) var jointScreenPositions : [CGPoint]!
-    
-
-    public var trackedViews = [TwoDBodyJoints : UIView]()
     
     required init() {
         fatalError("init() has not been implemented")
@@ -91,10 +94,18 @@ public class BodyEntity2D {
     }
     
     private func updateJointScreenPositions(frame: ARFrame){
+        guard let detectedBody = frame.detectedBody else {
+            bodyIsDetected = false
+            return
+        }
+        bodyIsDetected = true
+        
         guard
-        let jointLandmarks = frame.detectedBody?.skeleton.jointLandmarks,
-        let interfaceOrientation = self.arView.window?.windowScene?.interfaceOrientation
+            let interfaceOrientation = self.arView.window?.windowScene?.interfaceOrientation
         else { return }
+        
+        let jointLandmarks = detectedBody.skeleton.jointLandmarks
+        
         //Convert the normalized joint points into screen-space CGPoints.
         let transform = frame.displayTransform(for: interfaceOrientation, viewportSize: self.arView.frame.size)
         for i in 0..<jointLandmarks.count {
