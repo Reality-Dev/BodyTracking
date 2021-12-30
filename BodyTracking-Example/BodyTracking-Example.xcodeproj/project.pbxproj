@@ -10,8 +10,8 @@
 		550F68DB2655F555003F2808 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 550F68DA2655F555003F2808 /* README.md */; };
 		550F68E32655FE03003F2808 /* BodyEntity3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68DD2655FE03003F2808 /* BodyEntity3D.swift */; };
 		550F68E42655FE03003F2808 /* ARView+Occlusion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68DE2655FE03003F2808 /* ARView+Occlusion.swift */; };
-		550F68E52655FE03003F2808 /* HandTrackedEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68DF2655FE03003F2808 /* HandTrackedEntity.swift */; };
-		550F68E62655FE03003F2808 /* BodyEntity2D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68E02655FE03003F2808 /* BodyEntity2D.swift */; };
+		550F68E52655FE03003F2808 /* HandTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68DF2655FE03003F2808 /* HandTracker.swift */; };
+		550F68E62655FE03003F2808 /* BodyTracker2D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68E02655FE03003F2808 /* BodyTracker2D.swift */; };
 		550F68E72655FE03003F2808 /* BodyTrackedEntity+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68E12655FE03003F2808 /* BodyTrackedEntity+Extension.swift */; };
 		550F68E82655FE03003F2808 /* FaceEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550F68E22655FE03003F2808 /* FaceEntity.swift */; };
 		551C19B926123FF200530422 /* LICENSE3.txt in Resources */ = {isa = PBXBuildFile; fileRef = 551C19B826123FF200530422 /* LICENSE3.txt */; };
@@ -38,8 +38,8 @@
 		550F68DA2655F555003F2808 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../README.md; sourceTree = "<group>"; };
 		550F68DD2655FE03003F2808 /* BodyEntity3D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BodyEntity3D.swift; sourceTree = "<group>"; };
 		550F68DE2655FE03003F2808 /* ARView+Occlusion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ARView+Occlusion.swift"; sourceTree = "<group>"; };
-		550F68DF2655FE03003F2808 /* HandTrackedEntity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HandTrackedEntity.swift; sourceTree = "<group>"; };
-		550F68E02655FE03003F2808 /* BodyEntity2D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BodyEntity2D.swift; sourceTree = "<group>"; };
+		550F68DF2655FE03003F2808 /* HandTracker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HandTracker.swift; sourceTree = "<group>"; };
+		550F68E02655FE03003F2808 /* BodyTracker2D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BodyTracker2D.swift; sourceTree = "<group>"; };
 		550F68E12655FE03003F2808 /* BodyTrackedEntity+Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "BodyTrackedEntity+Extension.swift"; sourceTree = "<group>"; };
 		550F68E22655FE03003F2808 /* FaceEntity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FaceEntity.swift; sourceTree = "<group>"; };
 		551C19B826123FF200530422 /* LICENSE3.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE3.txt; sourceTree = "<group>"; };
@@ -78,13 +78,13 @@
 		550F68DC2655FE03003F2808 /* BodyTracking */ = {
 			isa = PBXGroup;
 			children = (
-				550F68DD2655FE03003F2808 /* BodyEntity3D.swift */,
-				55D7BA9527409C9C000E4569 /* Utilities.swift */,
-				550F68E02655FE03003F2808 /* BodyEntity2D.swift */,
-				550F68DF2655FE03003F2808 /* HandTrackedEntity.swift */,
-				550F68DE2655FE03003F2808 /* ARView+Occlusion.swift */,
 				550F68E12655FE03003F2808 /* BodyTrackedEntity+Extension.swift */,
+				550F68DD2655FE03003F2808 /* BodyEntity3D.swift */,
 				550F68E22655FE03003F2808 /* FaceEntity.swift */,
+				550F68E02655FE03003F2808 /* BodyTracker2D.swift */,
+				550F68DF2655FE03003F2808 /* HandTracker.swift */,
+				550F68DE2655FE03003F2808 /* ARView+Occlusion.swift */,
+				55D7BA9527409C9C000E4569 /* Utilities.swift */,
 			);
 			path = BodyTracking;
 			sourceTree = "<group>";
@@ -249,12 +249,12 @@
 				55AFF6642612798200D05AE3 /* ARSUIView2D.swift in Sources */,
 				55600DCC263E893900D0D54E /* ARSUIViewBodyTrackedEntity.swift in Sources */,
 				55BFE69C25D2268B00E2BB8C /* Model.swift in Sources */,
-				550F68E62655FE03003F2808 /* BodyEntity2D.swift in Sources */,
+				550F68E62655FE03003F2808 /* BodyTracker2D.swift in Sources */,
 				55D7BA9627409C9C000E4569 /* Utilities.swift in Sources */,
 				553CCE78265469030073BA98 /* ARSUIViewHandTracking.swift in Sources */,
 				55AE082A264C2DB800227F35 /* ARSUIViewPersonSegmentation.swift in Sources */,
 				55DFE044265480EC001A951B /* ARSUIViewFace.swift in Sources */,
-				550F68E52655FE03003F2808 /* HandTrackedEntity.swift in Sources */,
+				550F68E52655FE03003F2808 /* HandTracker.swift in Sources */,
 				550F68E32655FE03003F2808 /* BodyEntity3D.swift in Sources */,
 				55BFE6A025D2268B00E2BB8C /* ARSUIView3D.swift in Sources */,
 			);

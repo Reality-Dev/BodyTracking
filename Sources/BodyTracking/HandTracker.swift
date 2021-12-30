@@ -8,7 +8,7 @@ import Vision
 
 //You can track as many hands as you want, or set the maximumHandCount of sampleBufferDelegate's handPoseRequest.
 @available(iOS 14.0, *)
-public class HandTrackedEntity {
+public class HandTracker {
     
     weak var arView : ARView!
     
@@ -39,7 +39,7 @@ public class HandTrackedEntity {
         self.arView = arView
         self.subscribeToUpdates()
         self.populateJointPositions()
-        self.sampleBufferDelegate = SampleBufferDelegate(handTrackedEntity: self,
+        self.sampleBufferDelegate = SampleBufferDelegate(handTracker: self,
                                                          confidenceThreshold: confidenceThreshold,
                                                          maximumHandCount: maximumHandCount)
     }
@@ -93,9 +93,13 @@ public class HandTrackedEntity {
     }
     
     ///Allows only one view per joint.
+    ///- This will add `thisView` to ARView automatically.
     ///- If you would like to attach more than one view per joint, then try attaching additional views to the view that is already attached to this joint.
     public func attach(thisView: UIView, toThisJoint thisJoint: HandJointName){
         self.trackedViews[thisJoint] = thisView
+        if thisView.superview == nil {
+            arView.addSubview(thisView)
+        }
     }
     
     public func removeJoint(_ joint: HandJointName){
@@ -154,16 +158,16 @@ public class HandTrackedEntity {
 @available(iOS 14, *)
 class SampleBufferDelegate {
     
-    weak var handTrackedEntity: HandTrackedEntity!
+    weak var handTracker: HandTracker!
     ///You can track as many hands as you want, or set the maximumHandCount
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     
     private var confidenceThreshold: Float!
     
-    init(handTrackedEntity: HandTrackedEntity,
+    init(handTracker: HandTracker,
          confidenceThreshold: Float,
          maximumHandCount: Int) {
-        self.handTrackedEntity = handTrackedEntity
+        self.handTracker = handTracker
         self.confidenceThreshold = confidenceThreshold
         handPoseRequest.maximumHandCount = maximumHandCount
     }
@@ -179,13 +183,13 @@ class SampleBufferDelegate {
             // Continue only when a hand was detected in the frame.
             // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
             guard let observation = handPoseRequest.results?.first else {
-                if handTrackedEntity.handIsRecognized == true {
-                    handTrackedEntity.handIsRecognized = false
+                if handTracker.handIsRecognized == true {
+                    handTracker.handIsRecognized = false
                 }
                 return
             }
-            if handTrackedEntity.handIsRecognized == false {
-                handTrackedEntity.handIsRecognized = true
+            if handTracker.handIsRecognized == false {
+                handTracker.handIsRecognized = true
             }
             // Get points for thumb and index finger.
             //let thumbPoints = try observation.recognizedPoints(.thumb)
@@ -196,7 +200,7 @@ class SampleBufferDelegate {
                 let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
                 let avPoint = convertVisionToAVFoundation(cgPoint)
                 let screenSpacePoint = convertAVFoundationToScreenSpace(avPoint)
-                handTrackedEntity.jointScreenPositions[point.key] = screenSpacePoint
+                handTracker.jointScreenPositions[point.key] = screenSpacePoint
             }
         } catch {
             print(error.localizedDescription)
@@ -210,7 +214,7 @@ class SampleBufferDelegate {
     private func convertAVFoundationToScreenSpace(_ point: CGPoint) -> CGPoint{
         //Convert from normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
         //to screen-space coordinates.
-        if let arView = handTrackedEntity.arView,
+        if let arView = handTracker.arView,
            let frame = arView.session.currentFrame,
             let interfaceOrientation = arView.window?.windowScene?.interfaceOrientation{
             let transform = frame.displayTransform(for: interfaceOrientation, viewportSize: arView.frame.size)

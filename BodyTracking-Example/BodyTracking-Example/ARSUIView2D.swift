@@ -12,7 +12,7 @@ import RealityKit
 class ARSUIView2D: BodyARView {
     
 
-    private var bodyEntity: BodyEntity2D!
+    private var bodyTracker: BodyTracker2D!
     
     ///Use this to display the angle formed at this joint.
     ///See the call to "angleBetween3Joints" below.
@@ -31,7 +31,7 @@ class ARSUIView2D: BodyARView {
     
     required init(frame frameRect: CGRect) {
         super.init(frame: frameRect)
-        self.bodyEntity = BodyEntity2D(arView: self)
+        self.bodyTracker = BodyTracker2D(arView: self)
         guard let _ = try? runBodyTrackingConfig2D() else { return }
         self.session.delegate = self
         
@@ -45,10 +45,9 @@ class ARSUIView2D: BodyARView {
     private func makeRightElbowJointVisible(){
         
         let rightElbowCircle = makeCircle(circleRadius: 20)
-        self.addSubview(rightElbowCircle)
         // ** HERE is the useful code: **
         //How to attach views to the skeleton:
-        self.bodyEntity.attach(thisView: rightElbowCircle, toThisJoint: .right_forearm_joint)
+        self.bodyTracker.attach(thisView: rightElbowCircle, toThisJoint: .right_forearm_joint)
         
         //Use this to display the angle formed at this joint.
         //See the call to "angleBetween3Joints" below.
@@ -71,8 +70,7 @@ class ARSUIView2D: BodyARView {
         //Another way to attach views to the skeletion, but iteratively this time:
         jointsToShow.forEach { joint in
             let circle = makeCircle(circleRadius: 20)
-            self.bodyEntity.attach(thisView: circle, toThisJoint: joint)
-            self.addSubview(circle)
+            self.bodyTracker.attach(thisView: circle, toThisJoint: joint)
         }
     }
     
@@ -80,8 +78,8 @@ class ARSUIView2D: BodyARView {
     
     override func stopSession(){
         super.stopSession()
-           self.bodyEntity.destroy()
-            self.bodyEntity = nil
+           self.bodyTracker.destroy()
+            self.bodyTracker = nil
            self.angleLabel.removeFromSuperview()
        }
     
@@ -115,14 +113,14 @@ extension ARSUIView2D: ARSessionDelegate {
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         
         //The formatting rounds the number.
-        if let jointAngle = self.bodyEntity.angleBetween3Joints(.right_hand_joint,
+        if let jointAngle = self.bodyTracker.angleBetween3Joints(.right_hand_joint,
                                                                 .right_forearm_joint,
                                                                 .right_shoulder_1_joint) {
             self.angleLabel.text = String(format: "%.0f", Float(jointAngle))
         }
         
         //Uncomment to show the angle formed by 2 joints instead of by 3 joints.
-//        if let jointAngle = self.bodyEntity.angleFrom2Joints(.right_forearm_joint, .right_shoulder_1_joint) {
+//        if let jointAngle = self.bodyTracker.angleFrom2Joints(.right_forearm_joint, .right_shoulder_1_joint) {
 //            self.angleLabel.text = String(format: "%.0f", Float(jointAngle))
 //        }
     }

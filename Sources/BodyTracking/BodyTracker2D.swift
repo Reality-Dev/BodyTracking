@@ -22,7 +22,7 @@ public extension ARView {
 }
 
 
-public class BodyEntity2D {
+public class BodyTracker2D {
     
     weak var arView : ARView!
     
@@ -73,9 +73,13 @@ public class BodyEntity2D {
     }
     
     ///Allows only one view per joint.
+    ///- This will add `thisView` to ARView automatically.
     ///- If you would like to attach more than one view per joint, then try attaching additional views to the view that is already attached to this joint.
     public func attach(thisView: UIView, toThisJoint thisJoint: TwoDBodyJoints){
         self.trackedViews[thisJoint] = thisView
+        if thisView.superview == nil {
+            arView.addSubview(thisView)
+        }
     }
     
     public func removeJoint(_ joint: TwoDBodyJoints){
