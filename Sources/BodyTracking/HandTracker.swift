@@ -64,7 +64,7 @@ public class HandTracker {
     }
     
     /// Destroy this Entity and its references to any ARViews
-    /// Without calling this, you could have a memory leak.
+    /// This helps prevent memory leaks.
     public func destroy() {
       self.arView = nil
         self.sampleBufferDelegate = nil

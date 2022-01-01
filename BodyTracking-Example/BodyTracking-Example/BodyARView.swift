@@ -9,7 +9,7 @@ import RealityKit
 
 class BodyARView: ARView {
     
-    ///Prevent memory leaks.
+    /// This helps prevent memory leaks.
     func stopSession(){
            self.session.pause()
            self.scene.anchors.removeAll()

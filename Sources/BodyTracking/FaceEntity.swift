@@ -34,7 +34,10 @@ public struct FaceComponent: Component {
     
     static var isRegistered = false
     
-    ///SCNMorpher can be used with blendshapes for Memoji type effects.
+    ///Identifiers for specific facial features with coefficients describing the relative movements of those features.
+    ///
+    ///See: `ARFaceAnchor.BlendShapeLocation` for more explanation.
+    ///- Note: SCNMorpher can be used with blendshapes for Memoji type effects.
     public internal(set) var blendShapes = [ARFaceAnchor.BlendShapeLocation : Float]()
     
     public internal(set) var rEyeTransform: simd_float4x4?
@@ -61,7 +64,10 @@ public class FaceEntity: Entity, HasAnchoring {
     
     public var face = FaceComponent()
 
-    ///SCNMorpher can be used with blendshapes for Memoji type effects.
+    ///Identifiers for specific facial features with coefficients describing the relative movements of those features.
+    ///
+    ///See: `ARFaceAnchor.BlendShapeLocation` for more explanation.
+    ///- Note: SCNMorpher can be used with blendshapes for Memoji type effects.
     public private(set) var blendShapes: [ARFaceAnchor.BlendShapeLocation : Float] {
         get {
             return self.face.blendShapes
@@ -88,7 +94,7 @@ public class FaceEntity: Entity, HasAnchoring {
     }
     
     /// Destroy this Entity and its references to any ARViews
-    /// Without calling this, you could have a memory leak.
+    /// This helps prevent memory leaks.
     public func destroy() {
       self.arView = nil
       for child in children {

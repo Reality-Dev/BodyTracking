@@ -28,6 +28,10 @@ public class BodyTracker2D {
     
     private var cancellableForUpdate : Cancellable?
     
+    ///The positions of the joints on screen.
+    ///
+    /// - (0,0) is in the top-left.
+    /// - Use the `rawValue` of a `TwoDBodyJoint` to index.
     public private(set) var jointScreenPositions : [CGPoint]!
 
     public private(set) var trackedViews = [TwoDBodyJoint : UIView]()
@@ -46,7 +50,7 @@ public class BodyTracker2D {
     }
     
     /// Destroy this Entity and its references to any ARViews
-    /// Without calling this, you could have a memory leak.
+    /// This helps prevent memory leaks.
     public func destroy() {
       self.arView = nil
         self.cancellableForUpdate = nil
