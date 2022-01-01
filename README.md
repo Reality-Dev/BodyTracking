@@ -8,6 +8,17 @@ This package includes classes that enable easy, convenient body tracking in Real
   <img src="https://img.shields.io/static/v1?label=Swift&message=5.5&color=orange&style=plastic&logo=swift"/>
 </p>
 
+## What's Included
+
+This package includes code for:
+- 3D Body Tracking
+- 2D Body Tracking
+- 2D Hand Tracking
+- 3D Face Tracking
+- 3D Eye Tracking
+- People Occlusion
+- Loading a BodyTrackedEntity (for 3D character animation)
+
 
 ## Requirements
 
