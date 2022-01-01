@@ -3,9 +3,6 @@ import RealityKit
 import ARKit
 import Combine
 
-//like snapchat, easy to attatch things to joints,
-//and to add occlusion without person segmentation.
-
 
 public extension ARView {
     ///If ARBodyTrackingConfiguration is supported on this device, run this type of configuration on this ARView's session.
@@ -27,43 +24,55 @@ public extension ARView {
 }
 
 
-
-
-public class BodyEntity3D: Entity {
-    weak var arView : ARView!
+public struct Body3DComponent: Component {
     
-    ///This is used to subscribe to scene update events, so we can run code every frame without an ARSessionDelegate.
-    public var updateCancellable : Cancellable!
-
-    private var trackedJoints = Set<TrackedBodyJoint>()
+    static var isRegistered = false
+    
+    internal var trackedJoints = Set<TrackedBodyJoint>()
     
     ///An amount, from 0 to 1, that the joint movements are smoothed by.
     public var smoothingAmount: Float = 0
     
+    public init(smoothingAmount: Float,
+                trackedJoints: Set<TrackedBodyJoint> = []){
+        register()
+        self.smoothingAmount = smoothingAmount
+        self.trackedJoints = trackedJoints
+    }
+    
+    private func register(){
+        if !Self.isRegistered {
+            Self.registerComponent()
+            Self.isRegistered = true
+        }
+    }
+}
+
+public class BodyEntity3D: Entity {
+    
+    internal weak var arView : ARView!
+    
+    ///This is used to subscribe to scene update events, so we can run code every frame without an ARSessionDelegate.
+    private var updateCancellable : Cancellable!
+    
+    public var body3D: Body3DComponent!
+    
+    public private(set) var arBodyAnchor: ARBodyAnchor?
     
     //Position 0,0,0 in world space.
     private var sceneAnchor = AnchorEntity(.world(transform: .init(diagonal: [1,1,1,1])))
     
-    public var usesOcclusionShapes: Bool! {
-        didSet {
-            if usesOcclusionShapes {
-                setUpOcclusion()
-            } else {
-                removeOcclusion()
-            }
-        }
-    }
-    
     public required init(arView: ARView,
-                  usesOcclusionShapes: Bool = true,
                          smoothingAmount: Float = 0) {
         self.arView = arView
-        self.usesOcclusionShapes = usesOcclusionShapes
-        self.smoothingAmount = smoothingAmount.clamped(0, 0.9999)
+        self.body3D = Body3DComponent(smoothingAmount: smoothingAmount.clamped(0, 0.9999))
+        
         super.init()
+        
         self.arView.scene.addAnchor(sceneAnchor)
         
         //An AnchorEntity targeting a body (at the hip joint) is not smoothed automatically, so we just use this instead of giving the BodyEntity3D an AnchoringComponent targeting a body.
+        //self acts as the root Entity located at the hip joint, and the scene anchor is always at position 0,0,0 in world space.
         sceneAnchor.addChild(self)
 
         self.subscribeToUpdates()
@@ -74,7 +83,7 @@ public class BodyEntity3D: Entity {
     }
     
     /// Destroy this Entity and its references to any ARViews
-    /// Without calling this, you could have a memory leak.
+    /// This helps prevent memory leaks.
     public func destroy() {
       self.arView = nil
       for child in children {
@@ -82,61 +91,78 @@ public class BodyEntity3D: Entity {
       }
         self.updateCancellable.cancel()
         self.updateCancellable = nil
-        self.trackedJoints = []
+        self.body3D.trackedJoints = []
       self.removeFromParent()
     }
     
 
     
     /// Use this function to attach an entity to a particular joint.
-    /// - After calling this function, an entity will follow the transform of a particular joint every frame. If you want to offset an entity from a joint transform, then attach one entity to that joint and then attach another entity to that entity, now using the offset.
+    /// - After calling this function, an entity will follow the transform of a particular joint every frame.
+    /// - If you want to offset an entity from a joint transform, then attach one entity to that joint and then attach another entity to that entity, now using the offset.
     /// - Parameters:
     ///   - entity: The entity to attach.
     ///   - jointName: The joint to attach the entity to.
     public func attach(thisEntity entity: Entity,
-                toThisJoint jointName: ThreeDBodyJoints,
+                toThisJoint jointName: ThreeDBodyJoint,
                 preservingWorldTransform: Bool = false){
         let joint: TrackedBodyJoint
-        if let jointLocal = trackedJoints.first(where: {$0.jointName == jointName}){
+        if let jointLocal = body3D.trackedJoints.first(where: {$0.jointName == jointName}){
             joint = jointLocal
-        } else { //trackedJoints does Not contain this joint yet.
+        } else { //body3DComponent.trackedJoints does Not contain this joint yet.
             joint = TrackedBodyJoint(jointName: jointName)
             self.self.addChild(joint)
             if let jointModelTransforms = ARSkeletonDefinition.defaultBody3D.neutralBodySkeleton3D?.jointModelTransforms{
                 joint.setTransformMatrix(jointModelTransforms[jointName.rawValue], relativeTo: self)
             }
-            trackedJoints.insert(joint)
+            body3D.trackedJoints.insert(joint)
         }
         joint.addChild(entity, preservingWorldTransform: preservingWorldTransform)
     }
     
     ///Removes this joint and all attached entities.
-    public func removeJoint(_ joint: ThreeDBodyJoints) {
-        if let jointLocal = trackedJoints.first(where: {$0.jointName == joint}){
-            jointLocal.children.removeAll()
+    public func removeJoint(_ joint: ThreeDBodyJoint) {
+        if let jointLocal = body3D.trackedJoints.first(where: {$0.jointName == joint}){
             jointLocal.removeFromParent()
-            trackedJoints.remove(jointLocal)
+            body3D.trackedJoints.remove(jointLocal)
         }
     }
     
+    public func jointModelTransform(for joint: ThreeDBodyJoint) -> simd_float4x4 {
+        if let trackedJoint = self.body3D.trackedJoints.first(where: {$0.jointName == joint}) {
+            return trackedJoint.transformMatrix(relativeTo: self)
+        } else if let bodyAnchor = self.arBodyAnchor {
+                return bodyAnchor.skeleton.jointModelTransforms[joint.rawValue]
+        } else {
+            return Transform().matrix
+        }
+    }
+    
+    //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     private func subscribeToUpdates(){
         self.updateCancellable = self.arView.scene.subscribe(to: SceneEvents.Update.self) { event in
-            if let bodyAnchor = self.arView.session.currentFrame?.anchors.first(where: {$0 is ARBodyAnchor}) as? ARBodyAnchor{
+            if let bodyAnchor = self.arView.session.currentFrame?.anchors.first(where: {$0 is ARBodyAnchor}) as? ARBodyAnchor {
+                    self.arBodyAnchor = bodyAnchor
                     //Must access the frame's anchors every frame. Storing the ARBodyAnchor does not give updates.
-                        self.updateJointsWith(arBodyAnchor: bodyAnchor)
+                    self.updateJointsWith(arBodyAnchor: bodyAnchor)
             }
         }
     }
     
     private func updateJointsWith(arBodyAnchor: ARBodyAnchor){
-        for trackedJoint in trackedJoints {
+        
+        if self.body3D.smoothingAmount == 0 {
+            self.setTransformMatrix(arBodyAnchor.transform, relativeTo: nil)
+        } else {
+            smoothHipMotion(newTransform: arBodyAnchor.transform)
+        }
+        
+        for trackedJoint in body3D.trackedJoints {
             let jointIndex = trackedJoint.jointName.rawValue
             let newTransform = arBodyAnchor.skeleton.jointModelTransforms[jointIndex]
-            if self.smoothingAmount == 0 {
-                self.setTransformMatrix(arBodyAnchor.transform, relativeTo: nil)
+            if self.body3D.smoothingAmount == 0 {
                 trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
             } else {
-                smoothHipMotion(newTransform: arBodyAnchor.transform)
                 smoothMotion(trackedJoint: trackedJoint, newTransform: newTransform)
             }
         }
@@ -150,10 +176,10 @@ public class BodyEntity3D: Entity {
             return
         }
         
-        let newOrientation = simd_slerp(self.orientation(relativeTo: nil), newTransform.orientation, (1 - smoothingAmount))
+        let newOrientation = simd_slerp(self.orientation(relativeTo: nil), newTransform.orientation, (1 - body3D.smoothingAmount))
 
         //Weight the old translation more than the new translation.
-        let newTranslation = newTransform.translation.smoothed(oldVal: self.position(relativeTo: nil), amount: smoothingAmount)
+        let newTranslation = newTransform.translation.smoothed(oldVal: self.position(relativeTo: nil), amount: body3D.smoothingAmount)
             
         let newTransform = Transform(scale: .one, rotation: newOrientation, translation: newTranslation).matrix
         self.setTransformMatrix(newTransform, relativeTo: nil)
@@ -163,20 +189,13 @@ public class BodyEntity3D: Entity {
 
         //Scale isn't changing for body joints, so don't smooth that.
         
-        let newOrientation = simd_slerp(trackedJoint.orientation, newTransform.orientation, (1 - self.smoothingAmount))
+        let newOrientation = simd_slerp(trackedJoint.orientation, newTransform.orientation, (1 - self.body3D.smoothingAmount))
 
         //Weight the old translation more than the new translation.
-        let newTranslation = newTransform.translation.smoothed(oldVal: trackedJoint.position, amount: self.smoothingAmount)
+        let newTranslation = newTransform.translation.smoothed(oldVal: trackedJoint.position, amount: self.body3D.smoothingAmount)
             
         let newTransform = Transform(scale: .one, rotation: newOrientation, translation: newTranslation).matrix
         trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
-    }
-    
-    func setUpOcclusion(){
-        
-    }
-    func removeOcclusion(){
-        
     }
 }
 
@@ -184,9 +203,9 @@ public class BodyEntity3D: Entity {
 
 public class TrackedBodyJoint: Entity {
     
-    var jointName: ThreeDBodyJoints!
+    public private(set) var jointName: ThreeDBodyJoint!
     
-    required init(jointName: ThreeDBodyJoints) {
+    required init(jointName: ThreeDBodyJoint) {
         self.jointName = jointName
         super.init()
     }
@@ -200,7 +219,8 @@ public class TrackedBodyJoint: Entity {
 ///ARSkeleton.JointName only contains 8 of these but this includes all of them :)
 ///
 ///Includes 91 joints total, 28 tracked.
-public enum ThreeDBodyJoints: Int {
+///- Use ThreeDBodyJoint.allCases to access an array of all joints
+public enum ThreeDBodyJoint: Int, CaseIterable {
     
 //Not-indented joints are tracked (their transforms follow the person's body).
 //Indented joints are untracked (they always maintain the same transform relative to their parent joint).
@@ -298,14 +318,14 @@ public enum ThreeDBodyJoints: Int {
     
     ///Use this function to determine if a particular joint is tracked or untracked.
     public func isTracked() -> Bool {
-        return ThreeDBodyJoints.trackedJoints.contains(self)
+        return ThreeDBodyJoint.trackedJoints.contains(self)
     }
     ///Not all joints are tracked, but these are.
     ///
     ///Tracked joints' transforms (position, rotation, scale) follow the person's body.
     ///Untracked joints always maintain the same transform relative to their parent joint.
     ///There are 91 joints total in the skeleton, and 28 are tracked.
-    public static var trackedJoints : Set<ThreeDBodyJoints> = [
+    public static var trackedJoints : Set<ThreeDBodyJoint> = [
         .root,
         .hips_joint,
         .left_upLeg_joint,

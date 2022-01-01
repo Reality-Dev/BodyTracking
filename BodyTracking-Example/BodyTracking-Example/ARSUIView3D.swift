@@ -44,7 +44,7 @@ class ARSUIView3D: BodyARView {
     private func makeTrackedJointsVisible(){
         //There are more joints you could attach entities to, I'm just using these.
         //Another way to attach entities to the skeletion, but iteratively this time:
-        ThreeDBodyJoints.trackedJoints.forEach { joint in
+        ThreeDBodyJoint.trackedJoints.forEach { joint in
             let sphere = makeSphere(radius: 0.05)
             bodyEntity.attach(thisEntity: sphere, toThisJoint: joint)
         }

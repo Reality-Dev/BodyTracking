@@ -30,19 +30,46 @@ public extension ARView {
     }
 }
 
+public struct FaceComponent: Component {
+    
+    static var isRegistered = false
+    
+    ///SCNMorpher can be used with blendshapes for Memoji type effects.
+    public internal(set) var blendShapes = [ARFaceAnchor.BlendShapeLocation : Float]()
+    
+    public internal(set) var rEyeTransform: simd_float4x4?
+    public internal(set) var lEyeTransform: simd_float4x4?
+    
+    public init(){
+        register()
+    }
+    
+    private func register(){
+        if !Self.isRegistered {
+            Self.registerComponent()
+            Self.isRegistered = true
+        }
+    }
+}
+
 
 public class FaceEntity: Entity, HasAnchoring {
-    weak var arView : ARView!
-
     
+    internal weak var arView : ARView!
+
     private var cancellableForUpdate : Cancellable?
+    
+    public var face = FaceComponent()
 
     ///SCNMorpher can be used with blendshapes for Memoji type effects.
-    ///There is even the option to use the front and back camera at the same time.
-    public var blendShapes = [ARFaceAnchor.BlendShapeLocation : Float]()
-    
-    public var rEyeTransform: simd_float4x4?
-    public var lEyeTransform: simd_float4x4?
+    public private(set) var blendShapes: [ARFaceAnchor.BlendShapeLocation : Float] {
+        get {
+            return self.face.blendShapes
+        }
+        set {
+            self.face.blendShapes = newValue
+        }
+    }
 
     
     public required init(arView: ARView) {
@@ -76,6 +103,7 @@ public class FaceEntity: Entity, HasAnchoring {
     
     
     //Subscribe to scene updates so we can run code every frame without a delegate.
+    //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     private func subscribeToUpdates(){
         self.cancellableForUpdate = self.arView.scene.subscribe(to: SceneEvents.Update.self, updateFace)
     }
@@ -86,8 +114,8 @@ public class FaceEntity: Entity, HasAnchoring {
     //Run this code every frame to get the joints.
     public func updateFace(event: SceneEvents.Update? = nil) {
         guard let faceAnchor = self.arView.session.currentFrame?.anchors.first(where: {$0 is ARFaceAnchor}) as? ARFaceAnchor else {return}
-        rEyeTransform = faceAnchor.rightEyeTransform
-        lEyeTransform = faceAnchor.leftEyeTransform
+        face.rEyeTransform = faceAnchor.rightEyeTransform
+        face.lEyeTransform = faceAnchor.leftEyeTransform
         for blendShape in faceAnchor.blendShapes {
             self.blendShapes[blendShape.key] = blendShape.value as? Float
         }

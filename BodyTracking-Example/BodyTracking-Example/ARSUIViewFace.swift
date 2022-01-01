@@ -102,9 +102,10 @@ class ARSUIViewFace: BodyARView {
 
 extension ARSUIViewFace: ARSessionDelegate {
     
+    //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        rEye.transform.matrix = faceEntity.rEyeTransform ?? .init()
-        lEye.transform.matrix = faceEntity.lEyeTransform ?? .init()
+        rEye.transform.matrix = faceEntity.face.rEyeTransform ?? .init()
+        lEye.transform.matrix = faceEntity.face.lEyeTransform ?? .init()
         
         //The more wide you open your eyes, the longer rays are that shoot out from your eyes.
         rEyeRay.scale.y = faceEntity.blendShapes[.eyeWideRight] ?? 1

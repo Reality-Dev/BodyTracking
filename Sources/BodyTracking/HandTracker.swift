@@ -10,7 +10,7 @@ import Vision
 @available(iOS 14.0, *)
 public class HandTracker {
     
-    weak var arView : ARView!
+    internal weak var arView : ARView!
     
     public typealias HandJointName = VNHumanHandPoseObservation.JointName
     
@@ -57,7 +57,7 @@ public class HandTracker {
         .wrist
     ]
 
-    public var trackedViews = [HandJointName : UIView]()
+    public private(set) var trackedViews = [HandJointName : UIView]()
     
     required init() {
         fatalError("init() has not been implemented")
@@ -80,6 +80,7 @@ public class HandTracker {
     
     
     //Subscribe to scene updates so we can run code every frame without a delegate.
+    //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     private func subscribeToUpdates(){
         self.cancellableForUpdate = self.arView.scene.subscribe(to: SceneEvents.Update.self, updateBody)
     }

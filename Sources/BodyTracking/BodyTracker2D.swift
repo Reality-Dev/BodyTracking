@@ -24,13 +24,13 @@ public extension ARView {
 
 public class BodyTracker2D {
     
-    weak var arView : ARView!
+    internal weak var arView : ARView!
     
     private var cancellableForUpdate : Cancellable?
     
     public private(set) var jointScreenPositions : [CGPoint]!
 
-    public var trackedViews = [TwoDBodyJoints : UIView]()
+    public private(set) var trackedViews = [TwoDBodyJoint : UIView]()
     
     ///True if a body is detected in the current frame.
     public private(set) var bodyIsDetected = false
@@ -61,6 +61,7 @@ public class BodyTracker2D {
     
     
     //Subscribe to scene updates so we can run code every frame without a delegate.
+    //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     private func subscribeToUpdates(){
         self.cancellableForUpdate = self.arView.scene.subscribe(to: SceneEvents.Update.self, updateBody)
     }
@@ -75,14 +76,14 @@ public class BodyTracker2D {
     ///Allows only one view per joint.
     ///- This will add `thisView` to ARView automatically.
     ///- If you would like to attach more than one view per joint, then try attaching additional views to the view that is already attached to this joint.
-    public func attach(thisView: UIView, toThisJoint thisJoint: TwoDBodyJoints){
+    public func attach(thisView: UIView, toThisJoint thisJoint: TwoDBodyJoint){
         self.trackedViews[thisJoint] = thisView
         if thisView.superview == nil {
             arView.addSubview(thisView)
         }
     }
     
-    public func removeJoint(_ joint: TwoDBodyJoints){
+    public func removeJoint(_ joint: TwoDBodyJoint){
         self.trackedViews[joint]?.removeFromSuperview()
         self.trackedViews.removeValue(forKey: joint)
     }
@@ -99,10 +100,10 @@ public class BodyTracker2D {
     
     private func updateJointScreenPositions(frame: ARFrame){
         guard let detectedBody = frame.detectedBody else {
-            bodyIsDetected = false
+            if bodyIsDetected == true {bodyIsDetected = false}
             return
         }
-        bodyIsDetected = true
+        if bodyIsDetected == false {bodyIsDetected = true}
         
         guard
             let interfaceOrientation = self.arView.window?.windowScene?.interfaceOrientation
@@ -141,9 +142,9 @@ public class BodyTracker2D {
     ///Returns the angle (in degrees) between 3 given joints, treating joint2 as the center point.
     /// - The maximum angle is 180.0°
     /// - See "ARView2D.swift" for an example usage.
-    public func angleBetween3Joints(_ joint1: TwoDBodyJoints,
-                                   _ joint2: TwoDBodyJoints,
-                                   _ joint3: TwoDBodyJoints) -> CGFloat? {
+    public func angleBetween3Joints(_ joint1: TwoDBodyJoint,
+                                   _ joint2: TwoDBodyJoint,
+                                   _ joint3: TwoDBodyJoint) -> CGFloat? {
         let joint1Index = joint1.rawValue
         let joint2Index = joint2.rawValue
         let joint3Index = joint3.rawValue
@@ -175,8 +176,8 @@ public class BodyTracker2D {
     ///A vector pointing to the right returns 270.0.
     ///A vector pointing up returns 180.0.
     ///A vector pointing to the left returns 90.0.
-    public func angleFrom2Joints(_ joint1: TwoDBodyJoints,
-                                 _ joint2: TwoDBodyJoints) -> CGFloat? {
+    public func angleFrom2Joints(_ joint1: TwoDBodyJoint,
+                                 _ joint2: TwoDBodyJoint) -> CGFloat? {
         let joint1Index = joint1.rawValue
         let joint2Index = joint2.rawValue
         
@@ -251,7 +252,8 @@ public extension CGPoint {
 ///ARSkeleton.JointName only contains 8 of these but this includes all of them :)
 ///
 ///Includes 17 joints.
-public enum TwoDBodyJoints: Int {
+///- Use TwoDBodyJoint.allCases to access an array of all joints
+public enum TwoDBodyJoint: Int, CaseIterable {
     case head_joint = 0
     case neck_1_joint = 1
     case right_shoulder_1_joint = 2

@@ -30,6 +30,19 @@ Add `import BodyTracking` to the top of your swift file to start.
 
 See the [example project](https://github.com/Reality-Dev/BodyTracking/tree/master/BodyTracking-Example) for guidance.
 
+
+While using `BodyEntity3D` you can access the joint transforms relative to the root/hip joint each frame by using         `jointModelTransform(for:)`.
+For example, you could find the right leg's transform like this:
+
+``` swift
+        jointModelTransform(for: .right_leg_joint)
+```
+
 ## Support
 
 If you have questions feel free to message me on [GitHub](https://github.com/Reality-Dev) or on [Twitter](https://twitter.com/GMJ4K)
+
+
+## More
+
+Pull Requests are welcome and encouraged.

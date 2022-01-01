@@ -59,7 +59,7 @@ class ARSUIView2D: BodyARView {
     ///This is an example for how to show multiple joints, iteratively.
     private func makeOtherJointsVisible(){
         //There are more joints you could attach views to, I'm just using these.
-        let jointsToShow : [TwoDBodyJoints] = [.right_hand_joint, .right_shoulder_1_joint,
+        let jointsToShow : [TwoDBodyJoint] = [.right_hand_joint, .right_shoulder_1_joint,
                                            .left_forearm_joint, .left_hand_joint,
                                            .left_shoulder_1_joint,
                                            .head_joint, .neck_1_joint,
@@ -110,6 +110,7 @@ class ARSUIView2D: BodyARView {
 
 extension ARSUIView2D: ARSessionDelegate {
     
+    //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         
         //The formatting rounds the number.
