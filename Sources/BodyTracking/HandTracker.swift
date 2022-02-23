@@ -29,9 +29,9 @@ public class HandTracker {
     ///Running the request every frame may decrease performance.
     ///Can be reduced to increase performance at the cost of choppy tracking.
     ///Set to half to run every other frame. Set to quarter to run every 1 out of 4 frames.
-    public var requestRate: RequestRate = .half
+    public var requestRate: RequestRate = .quarter
     
-    private var frameInt = 0
+    private var frameInt = 1
     
     public required init(arView: ARView,
                          confidenceThreshold: Float = 0.4,
@@ -68,6 +68,7 @@ public class HandTracker {
     public func destroy() {
       self.arView = nil
         self.sampleBufferDelegate = nil
+        self.cancellableForUpdate?.cancel()
         self.cancellableForUpdate = nil
         self.jointScreenPositions = [:]
         self.trackedViews.forEach { view in
@@ -117,7 +118,7 @@ public class HandTracker {
         //Another way to do it is to keep the buffer full until the request finishes and then set the buffer to nil and process the next request.
         if frameInt == self.requestRate.rawValue {
             sampleBufferDelegate.runFingerDetection(frame: frame)
-            frameInt = 0
+            frameInt = 1
         } else {
             frameInt += 1
         }

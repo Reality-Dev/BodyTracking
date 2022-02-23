@@ -100,6 +100,7 @@ public class FaceEntity: Entity, HasAnchoring {
       for child in children {
         child.removeFromParent()
       }
+        self.cancellableForUpdate?.cancel()
         self.cancellableForUpdate = nil
         self.blendShapes = [:]
       self.removeFromParent()

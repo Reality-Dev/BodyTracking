@@ -53,6 +53,7 @@ public class BodyTracker2D {
     /// This helps prevent memory leaks.
     public func destroy() {
       self.arView = nil
+        self.cancellableForUpdate?.cancel()
         self.cancellableForUpdate = nil
         self.jointScreenPositions = []
         self.trackedViews.forEach { view in
