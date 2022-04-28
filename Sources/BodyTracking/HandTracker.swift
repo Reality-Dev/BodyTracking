@@ -176,36 +176,41 @@ class SampleBufferDelegate {
     
     func runFingerDetection(frame: ARFrame){
         //Run hand detection asynchronously to keep app from lagging.
-        //DispatchQueue.main.async {
+        DispatchQueue.global().async { [weak self] in
+            
+        guard let self = self else {return}
         
         let handler = VNImageRequestHandler(cvPixelBuffer: frame.capturedImage, orientation: .up, options: [:])
         do {
             // Perform VNDetectHumanHandPoseRequest
-            try handler.perform([handPoseRequest])
+            try handler.perform([self.handPoseRequest])
             // Continue only when a hand was detected in the frame.
             // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
-            guard let observation = handPoseRequest.results?.first else {
-                if handTracker.handIsRecognized == true {
-                    handTracker.handIsRecognized = false
+            guard let observation = self.handPoseRequest.results?.first else {
+                if self.handTracker.handIsRecognized == true {
+                    self.handTracker.handIsRecognized = false
                 }
                 return
             }
-            if handTracker.handIsRecognized == false {
-                handTracker.handIsRecognized = true
+            if self.handTracker.handIsRecognized == false {
+                self.handTracker.handIsRecognized = true
             }
             // Get points for thumb and index finger.
             //let thumbPoints = try observation.recognizedPoints(.thumb)
             let fingerPoints = try observation.recognizedPoints(.all)
 
-            for point in fingerPoints {
-                guard point.value.confidence > confidenceThreshold else {continue}
-                let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
-                let avPoint = convertVisionToAVFoundation(cgPoint)
-                let screenSpacePoint = convertAVFoundationToScreenSpace(avPoint)
-                handTracker.jointScreenPositions[point.key] = screenSpacePoint
+            DispatchQueue.main.async {
+                for point in fingerPoints {
+                    guard point.value.confidence > self.confidenceThreshold else {continue}
+                    let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
+                    let avPoint = self.convertVisionToAVFoundation(cgPoint)
+                    let screenSpacePoint = self.convertAVFoundationToScreenSpace(avPoint)
+                    self.handTracker.jointScreenPositions[point.key] = screenSpacePoint
+                }
             }
         } catch {
             print(error.localizedDescription)
+        }
         }
     }
     
