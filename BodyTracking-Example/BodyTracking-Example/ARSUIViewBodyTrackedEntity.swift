@@ -48,12 +48,7 @@ class ARSUIViewBodyTrackedEntity: BodyARView {
         
     }
     
-    
-    
-    
 
-    
-    
     
     @objc required dynamic init?(coder decoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -64,5 +59,9 @@ class ARSUIViewBodyTrackedEntity: BodyARView {
             self.robot.removeFromParent()
             self.robot = nil
        }
+    
+    deinit {
+        self.stopSession()
+    }
     
 }

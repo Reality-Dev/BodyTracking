@@ -11,7 +11,8 @@ import SwiftUI
 
 
 public enum ARChoice: Int {
-    case handTracking
+    case handTracking2D
+    case handTracking3D
     case face
     case twoD
     case threeD
@@ -41,8 +42,10 @@ final class DataModel: ObservableObject {
         didSet {
             print("arChoice is:", arChoice.rawValue)
             switch arChoice {
-            case .handTracking:
-                self.arView = ARSUIViewHandTracking(frame: .zero)
+            case .handTracking2D:
+                self.arView = ARSUIViewHandTracking2D(frame: .zero)
+            case .handTracking3D:
+                self.arView = ARSUIViewHandTracking3D(frame: .zero)
             case .face:
                 self.arView = ARSUIViewFace(frame: .zero)
             case .twoD:

@@ -1,23 +1,11 @@
 
 import RealityKit
-import Combine
 import ARKit
 import UIKit
 import Vision
 
 
-//You can track as many hands as you want, or set the maximumHandCount of sampleBufferDelegate's handPoseRequest.
-@available(iOS 14.0, *)
-public class HandTracker {
-    
-    internal weak var arView : ARView!
-    
-    public typealias HandJointName = VNHumanHandPoseObservation.JointName
-    
-    private var cancellableForUpdate : Cancellable?
-    
-    private var sampleBufferDelegate : SampleBufferDelegate!
-    
+public class FrameRateRegulator {
     public enum RequestRate: Int {
         case everyFrame = 1
         case half = 2
@@ -33,22 +21,55 @@ public class HandTracker {
     
     private var frameInt = 1
     
+    fileprivate func canContinue() -> Bool {
+        if frameInt == self.requestRate.rawValue {
+            frameInt = 1
+            return true
+            
+        } else {
+            frameInt += 1
+            return false
+        }
+    }
+}
+
+
+//You can track as many hands as you want, or set the maximumHandCount of sampleBufferDelegate's handPoseRequest.
+@available(iOS 14.0, *)
+public class HandTracker2D {
+    
+    internal weak var arView : ARView?
+    
+    public typealias HandJointName = VNHumanHandPoseObservation.JointName
+    
+    private var sampleBufferDelegate : SampleBufferDelegate!
+    
+    internal var id = UUID()
+    
+    public var frameRateRegulator = FrameRateRegulator()
+
     public required init(arView: ARView,
                          confidenceThreshold: Float = 0.4,
                          maximumHandCount: Int = 1) {
         self.arView = arView
-        self.subscribeToUpdates()
         self.populateJointPositions()
         self.sampleBufferDelegate = SampleBufferDelegate(handTracker: self,
                                                          confidenceThreshold: confidenceThreshold,
                                                          maximumHandCount: maximumHandCount)
+        
+        HandTrackingSystem.registerSystem(arView: arView)
+        HandTrackingSystem.trackedObjects.append(.twoD(self))
     }
     
     public fileprivate(set) var handIsRecognized = false
     
+    ///Screen-space coordinates. These can be used with a UIKit view or ARView covering the entire screen.
     public fileprivate(set) var jointScreenPositions : [HandJointName : CGPoint]!
     
-    public let allHandJoints : Set<HandJointName> = [
+    ///Normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
+    public fileprivate(set) var jointAVFoundationPositions : [HandJointName : CGPoint]!
+    
+    public static let allHandJoints : Set<HandJointName> = [
         .thumbTip, .thumbIP, .thumbMP, .thumbCMC,
         .indexTip, .indexDIP, .indexPIP, .indexMCP,
         .middleTip, .middleDIP, .middlePIP, .middleMCP,
@@ -68,29 +89,27 @@ public class HandTracker {
     public func destroy() {
       self.arView = nil
         self.sampleBufferDelegate = nil
-        self.cancellableForUpdate?.cancel()
-        self.cancellableForUpdate = nil
         self.jointScreenPositions = [:]
         self.trackedViews.forEach { view in
             view.value.removeFromSuperview()
         }
         self.trackedViews.removeAll()
+        
+        if let trackedIndex = HandTrackingSystem.trackedObjects.firstIndex(where: {$0.id == self.id}){
+            HandTrackingSystem.trackedObjects.remove(at: trackedIndex)
+        }
+
+        HandTrackingSystem.unRegisterSystem()
     }
     
-    
-    
-    
-    //Subscribe to scene updates so we can run code every frame without a delegate.
-    //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
-    private func subscribeToUpdates(){
-        self.cancellableForUpdate = self.arView.scene.subscribe(to: SceneEvents.Update.self, updateBody)
-    }
-    
+
     private func populateJointPositions() {
         jointScreenPositions = [:]
+        jointAVFoundationPositions = [:]
         //21 total.
-        for joint in allHandJoints {
+        for joint in Self.allHandJoints {
             jointScreenPositions[joint] = CGPoint()
+            jointAVFoundationPositions[joint] = CGPoint()
         }
     }
     
@@ -98,6 +117,8 @@ public class HandTracker {
     ///- This will add `thisView` to ARView automatically.
     ///- If you would like to attach more than one view per joint, then try attaching additional views to the view that is already attached to this joint.
     public func attach(thisView: UIView, toThisJoint thisJoint: HandJointName){
+        guard let arView = arView else {return}
+        
         self.trackedViews[thisJoint] = thisView
         if thisView.superview == nil {
             arView.addSubview(thisView)
@@ -110,21 +131,16 @@ public class HandTracker {
     }
     
     //Run this code every frame to get the joints.
-    private func updateBody(event: SceneEvents.Update? = nil) {
+    internal func update() {
         guard
-            let frame = self.arView.session.currentFrame
+            let frame = self.arView?.session.currentFrame
         else {return}
         
-        //Another way to do it is to keep the buffer full until the request finishes and then set the buffer to nil and process the next request.
-        if frameInt == self.requestRate.rawValue {
+        if self.frameRateRegulator.canContinue() {
             sampleBufferDelegate.runFingerDetection(frame: frame)
-            frameInt = 1
-        } else {
-            frameInt += 1
         }
         
         updateTrackedViews(frame: frame)
-
     }
     
     private func updateTrackedViews(frame: ARFrame){
@@ -138,7 +154,7 @@ public class HandTracker {
             if let screenPosition = jointScreenPositions[jointIndex] {
 
                 let viewCenter = view.value.center
-                switch requestRate {
+                switch frameRateRegulator.requestRate {
                 case .everyFrame:
                     view.value.center = screenPosition
                     
@@ -155,18 +171,16 @@ public class HandTracker {
 
 
 
-
-
 @available(iOS 14, *)
 class SampleBufferDelegate {
     
-    weak var handTracker: HandTracker!
+    weak var handTracker: HandTracker2D!
     ///You can track as many hands as you want, or set the maximumHandCount
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     
     private var confidenceThreshold: Float!
     
-    init(handTracker: HandTracker,
+    init(handTracker: HandTracker2D,
          confidenceThreshold: Float,
          maximumHandCount: Int) {
         self.handTracker = handTracker
@@ -195,41 +209,25 @@ class SampleBufferDelegate {
             if self.handTracker.handIsRecognized == false {
                 self.handTracker.handIsRecognized = true
             }
-            // Get points for thumb and index finger.
-            //let thumbPoints = try observation.recognizedPoints(.thumb)
+
             let fingerPoints = try observation.recognizedPoints(.all)
 
             DispatchQueue.main.async {
                 for point in fingerPoints {
+                    
                     guard point.value.confidence > self.confidenceThreshold else {continue}
                     let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
-                    let avPoint = self.convertVisionToAVFoundation(cgPoint)
-                    let screenSpacePoint = self.convertAVFoundationToScreenSpace(avPoint)
+                    
+                    let avPoint = cgPoint.convertVisionToAVFoundation()
+                    self.handTracker.jointAVFoundationPositions[point.key] = avPoint
+                    
+                    let screenSpacePoint = self.handTracker.arView?.convertAVFoundationToScreenSpace(avPoint) ?? .zero
                     self.handTracker.jointScreenPositions[point.key] = screenSpacePoint
                 }
             }
         } catch {
             print(error.localizedDescription)
         }
-        }
-    }
-    
-    private func convertVisionToAVFoundation(_ inputPoint: CGPoint) -> CGPoint {
-        return CGPoint(x: inputPoint.x, y: 1 - inputPoint.y)
-    }
-    
-    private func convertAVFoundationToScreenSpace(_ point: CGPoint) -> CGPoint{
-        //Convert from normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
-        //to screen-space coordinates.
-        if let arView = handTracker.arView,
-           let frame = arView.session.currentFrame,
-            let interfaceOrientation = arView.window?.windowScene?.interfaceOrientation{
-            let transform = frame.displayTransform(for: interfaceOrientation, viewportSize: arView.frame.size)
-            let normalizedCenter = point.applying(transform)
-            let center = normalizedCenter.applying(CGAffineTransform.identity.scaledBy(x: arView.frame.width, y: arView.frame.height))
-            return center
-        } else {
-            return CGPoint()
         }
     }
 }

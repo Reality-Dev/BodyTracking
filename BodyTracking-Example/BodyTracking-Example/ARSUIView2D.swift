@@ -83,6 +83,10 @@ class ARSUIView2D: BodyARView {
            self.angleLabel.removeFromSuperview()
        }
     
+    deinit {
+        self.stopSession()
+    }
+    
     
     private func makeCircle(circleRadius: CGFloat = 72,
                             color: CGColor = #colorLiteral(red: 0.3175252703, green: 0.7384468404, blue: 0.9564777644, alpha: 1)) -> UIView {

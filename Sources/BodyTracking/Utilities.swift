@@ -11,6 +11,16 @@ import RealityKit
 
 public extension Entity {
     
+    static func makeSphere(color: UIColor = .blue,
+                            radius: Float = 0.15,
+                            isMetallic: Bool = true) -> ModelEntity {
+        
+        let sphereMesh = MeshResource.generateSphere(radius: radius)
+        let sphereMaterial = SimpleMaterial.init(color: color, isMetallic: isMetallic)
+        return ModelEntity(mesh: sphereMesh,
+                           materials: [sphereMaterial])
+    }
+    
     ///Recursively searches through all descendants (depth first) for an Entity that satisfies the given predicate, Not just through the direct children.
     func findEntity(where predicate: (Entity) -> Bool) -> Entity? {
         for child in self.children {

@@ -9,10 +9,10 @@ import ARKit
 import RealityKit
 //import BodyTracking
 
-class ARSUIViewHandTracking: BodyARView {
+class ARSUIViewHandTracking2D: BodyARView {
     
 
-    private var handTracker: HandTracker!
+    private var handTracker: HandTracker2D!
     
 
     // Track the screen dimensions:
@@ -40,7 +40,7 @@ class ARSUIViewHandTracking: BodyARView {
         super.didMoveToSuperview()
         
         
-        self.handTracker = HandTracker(arView: self)
+        self.handTracker = HandTracker2D(arView: self)
         
         makeHandJointsVisible()
     }
@@ -50,7 +50,7 @@ class ARSUIViewHandTracking: BodyARView {
     private func makeHandJointsVisible(){
         
         //Another way to attach views to the skeletion, but iteratively this time:
-        handTracker.allHandJoints.forEach { joint in
+        HandTracker2D.allHandJoints.forEach { joint in
             let circle = makeCircle(circleRadius: 20, color: #colorLiteral(red: 0, green: 0.9768045545, blue: 0, alpha: 1))
             self.handTracker.attach(thisView: circle, toThisJoint: joint)
         }
@@ -63,6 +63,9 @@ class ARSUIViewHandTracking: BodyARView {
             self.handTracker = nil
        }
     
+    deinit {
+        stopSession()
+    }
     
     private func makeCircle(circleRadius: CGFloat = 72,
                             color: CGColor = #colorLiteral(red: 0.3175252703, green: 0.7384468404, blue: 0.9564777644, alpha: 1)) -> UIView {

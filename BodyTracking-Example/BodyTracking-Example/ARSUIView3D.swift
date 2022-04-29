@@ -14,7 +14,6 @@ class ARSUIView3D: BodyARView {
     private var bodyEntity : BodyEntity3D!
 
     
-    
     required init(frame frameRect: CGRect) {
         super.init(frame: frameRect)
         self.bodyEntity = BodyEntity3D(arView: self,
@@ -34,7 +33,7 @@ class ARSUIView3D: BodyARView {
     
     ///This is an example for how to show one joint.
     private func makeRightHandVisible(){
-        let rightHandSphere = makeSphere(radius: 0.05)
+        let rightHandSphere = Entity.makeSphere(radius: 0.05)
         // ** HERE is the useful code: **
         //How to attach entities to the skeleton:
         bodyEntity.attach(thisEntity: rightHandSphere, toThisJoint: .right_hand_joint)
@@ -45,7 +44,7 @@ class ARSUIView3D: BodyARView {
         //There are more joints you could attach entities to, I'm just using these.
         //Another way to attach entities to the skeletion, but iteratively this time:
         ThreeDBodyJoint.trackedJoints.forEach { joint in
-            let sphere = makeSphere(radius: 0.05)
+            let sphere = Entity.makeSphere(radius: 0.05)
             bodyEntity.attach(thisEntity: sphere, toThisJoint: joint)
         }
     }
@@ -58,21 +57,9 @@ class ARSUIView3D: BodyARView {
             self.bodyEntity = nil
     }
     
-
-    
-    
-
-    
-    private func makeSphere(color: UIColor = .blue,
-                            radius: Float = 0.15,
-                            isMetallic: Bool = true) -> ModelEntity{
-        
-        let sphereMesh = MeshResource.generateSphere(radius: radius)
-        let sphereMaterial = SimpleMaterial.init(color: color, isMetallic: isMetallic)
-        return ModelEntity(mesh: sphereMesh,
-                           materials: [sphereMaterial])
+    deinit {
+        self.stopSession()
     }
-    
     
     
     //required function.

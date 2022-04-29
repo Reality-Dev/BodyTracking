@@ -12,8 +12,6 @@ import RealityKit
 class ARSUIViewPersonSegmentation: BodyARView {
     
 
-    
-    
     required init(frame frameRect: CGRect) {
         super.init(frame: frameRect)
 
@@ -46,5 +44,8 @@ class ARSUIViewPersonSegmentation: BodyARView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit {
+        super.stopSession()
+    }
     
 }

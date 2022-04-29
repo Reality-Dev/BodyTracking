@@ -19,6 +19,21 @@ public extension ARView {
         config2D.frameSemantics = .bodyDetection
         self.session.run(config2D)
     }
+    
+    func convertAVFoundationToScreenSpace(_ point: CGPoint) -> CGPoint{
+        //Convert from normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
+        //to screen-space coordinates.
+        if
+            let arFrame = session.currentFrame,
+            let interfaceOrientation = window?.windowScene?.interfaceOrientation{
+            let transform = arFrame.displayTransform(for: interfaceOrientation, viewportSize: frame.size)
+            let normalizedCenter = point.applying(transform)
+            let center = normalizedCenter.applying(CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height))
+            return center
+        } else {
+            return CGPoint()
+        }
+    }
 }
 
 
@@ -250,7 +265,10 @@ public extension CGPoint {
         return CGPoint(x: lhs.x / rhs,
                        y: lhs.y / rhs)
     }
-
+    
+    func convertVisionToAVFoundation() -> CGPoint {
+        return CGPoint(x: self.x, y: 1 - self.y)
+    }
 }
 
 

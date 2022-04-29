@@ -15,7 +15,9 @@ struct ContentView : View {
         ScrollView() {
             ARButton(arChoice: .face, name: "Face Tracking")
                 .padding()
-            ARButton(arChoice: .handTracking, name: "Hand Tracking")
+            ARButton(arChoice: .handTracking2D, name: "Hand Tracking 2D")
+                .padding()
+            ARButton(arChoice: .handTracking3D, name: "Hand Tracking 3D")
                 .padding()
             ARButton(arChoice: .twoD, name: "2D")
                 .padding()

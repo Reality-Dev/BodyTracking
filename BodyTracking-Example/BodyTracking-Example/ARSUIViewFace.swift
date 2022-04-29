@@ -37,7 +37,9 @@ class ARSUIViewFace: BodyARView {
             self.faceEntity = nil
     }
     
-
+    deinit {
+        self.stopSession()
+    }
     
     
     private func makeFace(){
@@ -77,20 +79,9 @@ class ARSUIViewFace: BodyARView {
     }
     
     private func makeEye() -> ModelEntity{
-        let eyeBall = makeSphere(color: .white, radius: 0.02, isMetallic: false)
+        let eyeBall = Entity.makeSphere(color: .white, radius: 0.02, isMetallic: false)
         return eyeBall
     }
-    
-    private func makeSphere(color: UIColor = .blue,
-                            radius: Float = 0.05,
-                            isMetallic: Bool = true) -> ModelEntity{
-        
-        let sphereMesh = MeshResource.generateSphere(radius: radius)
-        let sphereMaterial = SimpleMaterial.init(color: color, isMetallic: isMetallic)
-        return ModelEntity(mesh: sphereMesh,
-                           materials: [sphereMaterial])
-    }
-
     
     
     //required function.
