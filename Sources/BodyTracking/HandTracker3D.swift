@@ -9,8 +9,8 @@ import Foundation
 import RealityKit
 import CoreVideo
 
-
-class HandTracker3D: Entity {
+@available(iOS 14.0, *)
+public class HandTracker3D: Entity {
     
     public fileprivate(set) var twoDHandTracker: HandTracker2D
     
@@ -45,6 +45,7 @@ class HandTracker3D: Entity {
         HandTrackingSystem.trackedObjects.append(.threeD(self))
     }
     
+    
     //Runs every frame.
     internal func update(){
         guard
@@ -65,6 +66,11 @@ class HandTracker3D: Entity {
         }
     }
     
+    /// Get the world-space position from a UIKit screen point and a depth value
+    /// - Parameters:
+    ///   - screenPosition: A CGPoint representing a point on screen in UIKit coordinates.
+    ///   - depth: The depth at this coordinate, in meters.
+    /// - Returns: The position in world space of this coordinate at this depth.
     private func worldPosition(screenPosition: CGPoint, depth: Float) -> simd_float3? {
         guard
             let arView = arView,
