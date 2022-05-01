@@ -20,8 +20,8 @@ public extension ARView {
         self.session.run(config2D)
     }
     
-    func convertAVFoundationToScreenSpace(_ point: CGPoint) -> CGPoint{
-        //Convert from normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
+    func convertAVFoundationToScreenSpace(_ point: CGPoint) -> CGPoint {
+        //Convert from normalized AVFoundation coordinates (0,0 top-left, 1,1 bottom-right)
         //to screen-space coordinates.
         if
             let arFrame = session.currentFrame,
@@ -33,6 +33,21 @@ public extension ARView {
         } else {
             return CGPoint()
         }
+    }
+    
+    func convertScreenSpaceToAVFoundation(_ point: CGPoint) -> CGPoint? {
+        //Convert to normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
+        //from screen-space coordinates.
+        guard
+          let arFrame = session.currentFrame,
+          let interfaceOrientation = window?.windowScene?.interfaceOrientation
+        else {return nil}
+           
+          let inverseScaleTransform = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height).inverted()
+          let invertedDisplayTransform = arFrame.displayTransform(for: interfaceOrientation, viewportSize: frame.size).inverted()
+          let unScaledPoint = point.applying(inverseScaleTransform)
+          let normalizedCenter = unScaledPoint.applying(invertedDisplayTransform)
+          return normalizedCenter
     }
 }
 

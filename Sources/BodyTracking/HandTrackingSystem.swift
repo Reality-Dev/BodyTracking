@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import RealityKit
 
+@available(iOS 14.0, *)
 internal class HandTrackingSystem {
     private static var cancellableForUpdate : Cancellable?
     
