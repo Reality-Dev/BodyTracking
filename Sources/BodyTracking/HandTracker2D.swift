@@ -174,7 +174,7 @@ public class HandTracker2D {
 @available(iOS 14, *)
 class SampleBufferDelegate {
     
-    weak var handTracker: HandTracker2D!
+    weak var handTracker: HandTracker2D?
     ///You can track as many hands as you want, or set the maximumHandCount
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     
@@ -192,7 +192,10 @@ class SampleBufferDelegate {
         //Run hand detection asynchronously to keep app from lagging.
         DispatchQueue.global().async { [weak self] in
             
-        guard let self = self else {return}
+        guard
+            let self = self,
+            let handTracker = self.handTracker
+        else {return}
         
         let handler = VNImageRequestHandler(cvPixelBuffer: frame.capturedImage, orientation: .up, options: [:])
         do {
@@ -201,13 +204,13 @@ class SampleBufferDelegate {
             // Continue only when a hand was detected in the frame.
             // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
             guard let observation = self.handPoseRequest.results?.first else {
-                if self.handTracker.handIsRecognized == true {
-                    self.handTracker.handIsRecognized = false
+                if handTracker.handIsRecognized == true {
+                    handTracker.handIsRecognized = false
                 }
                 return
             }
-            if self.handTracker.handIsRecognized == false {
-                self.handTracker.handIsRecognized = true
+            if handTracker.handIsRecognized == false {
+                handTracker.handIsRecognized = true
             }
 
             let fingerPoints = try observation.recognizedPoints(.all)
@@ -219,10 +222,10 @@ class SampleBufferDelegate {
                     let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
                     
                     let avPoint = cgPoint.convertVisionToAVFoundation()
-                    self.handTracker.jointAVFoundationPositions[point.key] = avPoint
+                    handTracker.jointAVFoundationPositions[point.key] = avPoint
                     
-                    let screenSpacePoint = self.handTracker.arView?.convertAVFoundationToScreenSpace(avPoint) ?? .zero
-                    self.handTracker.jointScreenPositions[point.key] = screenSpacePoint
+                    let screenSpacePoint = handTracker.arView?.convertAVFoundationToScreenSpace(avPoint) ?? .zero
+                    handTracker.jointScreenPositions[point.key] = screenSpacePoint
                 }
             }
         } catch {

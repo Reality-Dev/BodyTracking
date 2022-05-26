@@ -117,6 +117,7 @@ public class HandTracker3D: Entity {
         self.trackedEntities.forEach { ent in
             ent.value.removeFromParent()
         }
+        self.removeFromParent()
         self.trackedEntities.removeAll()
         
         if let trackedIndex = HandTrackingSystem.trackedObjects.firstIndex(where: {$0.id == self.uuid}){
