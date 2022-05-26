@@ -20,6 +20,8 @@ public class HandTracker3D: Entity {
     
     public private(set) var trackedEntities = [HandTracker2D.HandJointName : Entity]()
     
+    public private(set) var depthValues = [HandTracker2D.HandJointName : Float]()
+    
     ///The frequency that the Vision request for detecting hands will be performed.
     ///
     ///Running the request every frame may decrease performance.
@@ -51,7 +53,7 @@ public class HandTracker3D: Entity {
         guard
             let arView = arView,
             let currentFrame = arView.session.currentFrame,
-            let sceneDepth = (currentFrame.smoothedSceneDepth ?? currentFrame.sceneDepth)?.depthMap
+            let sceneDepth = currentFrame.estimatedDepthData
         else {return}
         
         for trackedEnt in trackedEntities {
@@ -59,7 +61,7 @@ public class HandTracker3D: Entity {
                 let screenPosition = self.twoDHandTracker.jointScreenPositions[trackedEnt.key],
                 let avPosition = self.twoDHandTracker.jointAVFoundationPositions[trackedEnt.key],
                 let depthAtPoint = sceneDepth.value(from: avPosition),
-                let worldPosition = worldPosition(screenPosition: screenPosition, depth: depthAtPoint)
+                let worldPosition = worldPosition(jointName: trackedEnt.key, screenPosition: screenPosition, depth: depthAtPoint)
             else {continue}
             
             trackedEnt.value.setPosition(worldPosition, relativeTo: nil)
@@ -71,11 +73,20 @@ public class HandTracker3D: Entity {
     ///   - screenPosition: A CGPoint representing a point on screen in UIKit coordinates.
     ///   - depth: The depth at this coordinate, in meters.
     /// - Returns: The position in world space of this coordinate at this depth.
-    public func worldPosition(screenPosition: CGPoint, depth: Float) -> simd_float3? {
+    public func worldPosition(jointName: HandTracker2D.HandJointName,
+                              screenPosition: CGPoint,
+                              depth: Float) -> simd_float3? {
         guard
             let arView = arView,
             let rayResult = arView.ray(through: screenPosition)
         else {return nil}
+        
+        var depth = depth
+        if depth == 0.0 {
+            depth = depthValues[jointName] ?? depth
+        } else {
+            depthValues[jointName] = depth
+        }
 
         //rayResult.direction is a normalized (1 meter long) vector pointing in the correct direction, and we want to go the length of depth along this vector.
          let worldOffset = rayResult.direction * depth
