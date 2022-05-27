@@ -61,6 +61,8 @@ public class HandTracker2D {
         HandTrackingSystem.trackedObjects.append(.twoD(self))
     }
     
+    internal fileprivate(set) var handHasBeenInitiallyIdentified = false
+    
     public fileprivate(set) var handIsRecognized = false
     
     ///Screen-space coordinates. These can be used with a UIKit view or ARView covering the entire screen.
@@ -211,6 +213,9 @@ class SampleBufferDelegate {
             }
             if handTracker.handIsRecognized == false {
                 handTracker.handIsRecognized = true
+            }
+            if handTracker.handHasBeenInitiallyIdentified == false {
+                handTracker.handHasBeenInitiallyIdentified = true
             }
 
             let fingerPoints = try observation.recognizedPoints(.all)

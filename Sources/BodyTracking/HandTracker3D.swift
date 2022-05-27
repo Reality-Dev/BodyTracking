@@ -18,6 +18,8 @@ public class HandTracker3D: Entity {
     
     internal weak var arView : ARView?
     
+    private var handHasBeenInitiallyIdentified = false
+    
     public private(set) var trackedEntities = [HandTracker2D.HandJointName : Entity]()
     
     public private(set) var depthValues = [HandTracker2D.HandJointName : Float]()
@@ -45,16 +47,26 @@ public class HandTracker3D: Entity {
         self.twoDHandTracker.frameRateRegulator.requestRate = .everyFrame
         HandTrackingSystem.registerSystem(arView: arView)
         HandTrackingSystem.trackedObjects.append(.threeD(self))
+        
+        //Leave disabled until the hand is initially recognized in frame.
+        self.isEnabled = false
     }
     
     
     //Runs every frame.
     internal func update(){
         guard
+            self.twoDHandTracker.handHasBeenInitiallyIdentified,
             let arView = arView,
             let currentFrame = arView.session.currentFrame,
             let sceneDepth = currentFrame.estimatedDepthData
         else {return}
+
+        //Allow developers to disable this entity for other reasons after the hand has initially been identified.
+        if handHasBeenInitiallyIdentified == false && self.isEnabled == false {
+            handHasBeenInitiallyIdentified = true
+            self.isEnabled = true
+        }
         
         for trackedEnt in trackedEntities {
             guard
