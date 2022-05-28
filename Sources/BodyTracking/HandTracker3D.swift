@@ -95,7 +95,7 @@ public class HandTracker3D: Entity {
         
         var depth = depth
         if depth == 0.0 {
-            depth = depthValues[jointName] ?? depth
+            depth = depthValues[.middleMCP] ?? depth
         } else {
             depthValues[jointName] = depth
         }
