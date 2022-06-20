@@ -47,10 +47,12 @@ internal class HandTrackingSystem {
     
     private static func update(event: SceneEvents.Update? = nil){
         
+        SampleBufferDelegate.shared.update()
+        
         for trackedObject in trackedObjects {
             switch trackedObject {
-            case .twoD(let handTracker2D):
-                handTracker2D.update()
+            case .twoD(_):
+                break
             case .threeD(let handTracker3D):
                 handTracker3D.update()
             }

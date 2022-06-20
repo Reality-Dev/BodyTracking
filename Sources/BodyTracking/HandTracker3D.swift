@@ -31,10 +31,10 @@ public class HandTracker3D: Entity {
     ///Set to half to run every other frame. Set to quarter to run every 1 out of 4 frames.
     public var requestRate: FrameRateRegulator.RequestRate {
         get {
-            return twoDHandTracker.frameRateRegulator.requestRate
+            return SampleBufferDelegate.shared.frameRateRegulator.requestRate
         }
         set {
-            twoDHandTracker.frameRateRegulator.requestRate = newValue
+            SampleBufferDelegate.shared.frameRateRegulator.requestRate = newValue
         }
     }
     
@@ -44,7 +44,7 @@ public class HandTracker3D: Entity {
         self.twoDHandTracker = .init(arView: arView)
         super.init()
         
-        self.twoDHandTracker.frameRateRegulator.requestRate = .everyFrame
+        SampleBufferDelegate.shared.frameRateRegulator.requestRate = .everyFrame
         HandTrackingSystem.registerSystem(arView: arView)
         HandTrackingSystem.trackedObjects.append(.threeD(self))
         

@@ -12,7 +12,9 @@ import RealityKit
 class ARSUIViewHandTracking2D: BodyARView {
     
 
-    private var handTracker: HandTracker2D!
+    private var handTracker1: HandTracker2D!
+    
+    private var handTracker2: HandTracker2D!
     
 
     // Track the screen dimensions:
@@ -40,27 +42,31 @@ class ARSUIViewHandTracking2D: BodyARView {
         super.didMoveToSuperview()
         
         
-        self.handTracker = HandTracker2D(arView: self)
+        self.handTracker1 = HandTracker2D(arView: self)
+        self.handTracker2 = HandTracker2D(arView: self)
         
-        makeHandJointsVisible()
+        makeHandJointsVisible(handTracker: handTracker1)
+        makeHandJointsVisible(handTracker: handTracker2)
     }
     
     
     ///This is an example for how to show multiple joints, iteratively.
-    private func makeHandJointsVisible(){
+    private func makeHandJointsVisible(handTracker: HandTracker2D){
         
         //Another way to attach views to the skeletion, but iteratively this time:
         HandTracker2D.allHandJoints.forEach { joint in
             let circle = makeCircle(circleRadius: 20, color: #colorLiteral(red: 0, green: 0.9768045545, blue: 0, alpha: 1))
-            self.handTracker.attach(thisView: circle, toThisJoint: joint)
+            handTracker.attach(thisView: circle, toThisJoint: joint)
         }
     }
 
     
     override func stopSession(){
         super.stopSession()
-           self.handTracker.destroy()
-            self.handTracker = nil
+        self.handTracker1.destroy()
+        self.handTracker1 = nil
+        self.handTracker2.destroy()
+        self.handTracker2 = nil
        }
     
     deinit {
@@ -80,8 +86,6 @@ class ARSUIViewHandTracking2D: BodyARView {
         circleView.layer.backgroundColor = color
         return circleView
     }
-    
-    
     
     
     //required function.

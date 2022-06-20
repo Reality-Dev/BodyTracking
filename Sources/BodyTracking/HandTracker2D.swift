@@ -38,27 +38,24 @@ public class FrameRateRegulator {
 @available(iOS 14.0, *)
 public class HandTracker2D {
     
+    public var confidenceThreshold: Float!
+    
     internal weak var arView : ARView?
     
     public typealias HandJointName = VNHumanHandPoseObservation.JointName
     
-    private var sampleBufferDelegate : SampleBufferDelegate!
-    
     internal var id = UUID()
-    
-    public var frameRateRegulator = FrameRateRegulator()
 
     public required init(arView: ARView,
-                         confidenceThreshold: Float = 0.4,
-                         maximumHandCount: Int = 1) {
+                         confidenceThreshold: Float = 0.4) {
         self.arView = arView
+        self.confidenceThreshold = confidenceThreshold
+        SampleBufferDelegate.shared.arView = arView
         self.populateJointPositions()
-        self.sampleBufferDelegate = SampleBufferDelegate(handTracker: self,
-                                                         confidenceThreshold: confidenceThreshold,
-                                                         maximumHandCount: maximumHandCount)
         
         HandTrackingSystem.registerSystem(arView: arView)
         HandTrackingSystem.trackedObjects.append(.twoD(self))
+        SampleBufferDelegate.shared.handTrackers.append(self)
     }
     
     internal fileprivate(set) var handHasBeenInitiallyIdentified = false
@@ -89,8 +86,7 @@ public class HandTracker2D {
     /// Destroy this Entity and its references to any ARViews
     /// This helps prevent memory leaks.
     public func destroy() {
-      self.arView = nil
-        self.sampleBufferDelegate = nil
+        self.arView = nil
         self.jointScreenPositions = [:]
         self.trackedViews.forEach { view in
             view.value.removeFromSuperview()
@@ -132,20 +128,7 @@ public class HandTracker2D {
         self.trackedViews.removeValue(forKey: joint)
     }
     
-    //Run this code every frame to get the joints.
-    internal func update() {
-        guard
-            let frame = self.arView?.session.currentFrame
-        else {return}
-        
-        if self.frameRateRegulator.canContinue() {
-            sampleBufferDelegate.runFingerDetection(frame: frame)
-        }
-        
-        updateTrackedViews(frame: frame)
-    }
-    
-    private func updateTrackedViews(frame: ARFrame){
+    fileprivate func updateTrackedViews(frame: ARFrame){
 
         guard
               jointScreenPositions.count > 0
@@ -156,7 +139,7 @@ public class HandTracker2D {
             if let screenPosition = jointScreenPositions[jointIndex] {
 
                 let viewCenter = view.value.center
-                switch frameRateRegulator.requestRate {
+                switch SampleBufferDelegate.shared.frameRateRegulator.requestRate {
                 case .everyFrame:
                     view.value.center = screenPosition
                     
@@ -176,18 +159,40 @@ public class HandTracker2D {
 @available(iOS 14, *)
 class SampleBufferDelegate {
     
-    weak var handTracker: HandTracker2D?
+    static var shared = SampleBufferDelegate()
+    
+    public var frameRateRegulator = FrameRateRegulator()
+    
+    internal weak var arView : ARView?
+    
+    @WeakCollection var handTrackers = [HandTracker2D]() {
+        didSet {
+            handPoseRequest.maximumHandCount = handTrackers.count
+        }
+    }
+    
     ///You can track as many hands as you want, or set the maximumHandCount
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     
-    private var confidenceThreshold: Float!
+    init() {
+        handPoseRequest.maximumHandCount = 1
+    }
     
-    init(handTracker: HandTracker2D,
-         confidenceThreshold: Float,
-         maximumHandCount: Int) {
-        self.handTracker = handTracker
-        self.confidenceThreshold = confidenceThreshold
-        handPoseRequest.maximumHandCount = maximumHandCount
+    
+    //Run this code every frame to get the joints.
+    func update() {
+        guard
+            let frame = self.arView?.session.currentFrame
+        else {return}
+        
+        if frameRateRegulator.canContinue() {
+            self.runFingerDetection(frame: frame)
+        }
+        
+        for handTracker in self.handTrackers {
+            
+            handTracker.updateTrackedViews(frame: frame)
+        }
     }
     
     func runFingerDetection(frame: ARFrame){
@@ -195,8 +200,7 @@ class SampleBufferDelegate {
         DispatchQueue.global().async { [weak self] in
             
         guard
-            let self = self,
-            let handTracker = self.handTracker
+            let self = self
         else {return}
         
         let handler = VNImageRequestHandler(cvPixelBuffer: frame.capturedImage, orientation: .up, options: [:])
@@ -205,37 +209,45 @@ class SampleBufferDelegate {
             try handler.perform([self.handPoseRequest])
             // Continue only when a hand was detected in the frame.
             // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
-            guard let observation = self.handPoseRequest.results?.first else {
-                if handTracker.handIsRecognized == true {
-                    handTracker.handIsRecognized = false
+            guard let observations = self.handPoseRequest.results else {
+                for handTracker in self.handTrackers {
+                    if handTracker.handIsRecognized == true {
+                        handTracker.handIsRecognized = false
+                    }
                 }
                 return
             }
-            if handTracker.handIsRecognized == false {
-                handTracker.handIsRecognized = true
-            }
-            if handTracker.handHasBeenInitiallyIdentified == false {
-                handTracker.handHasBeenInitiallyIdentified = true
-            }
-
-            let fingerPoints = try observation.recognizedPoints(.all)
-
-            DispatchQueue.main.async {
-                for point in fingerPoints {
-                    
-                    guard point.value.confidence > self.confidenceThreshold else {continue}
-                    let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
-                    
-                    let avPoint = cgPoint.convertVisionToAVFoundation()
-                    handTracker.jointAVFoundationPositions[point.key] = avPoint
-                    
-                    let screenSpacePoint = handTracker.arView?.convertAVFoundationToScreenSpace(avPoint) ?? .zero
-                    handTracker.jointScreenPositions[point.key] = screenSpacePoint
+            for handTracker in self.handTrackers {
+                if handTracker.handIsRecognized == false {
+                    handTracker.handIsRecognized = true
+                }
+                if handTracker.handHasBeenInitiallyIdentified == false {
+                    handTracker.handHasBeenInitiallyIdentified = true
                 }
             }
-        } catch {
-            print(error.localizedDescription)
-        }
+            let pairs = zip(observations, self.handTrackers)
+            
+            for (observation, handTracker) in pairs {
+
+                let fingerPoints = try observation.recognizedPoints(.all)
+
+                DispatchQueue.main.async {
+                    for point in fingerPoints {
+                        
+                        guard point.value.confidence > handTracker.confidenceThreshold else {continue}
+                        let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
+                        
+                        let avPoint = cgPoint.convertVisionToAVFoundation()
+                        handTracker.jointAVFoundationPositions[point.key] = avPoint
+                        
+                        let screenSpacePoint = handTracker.arView?.convertAVFoundationToScreenSpace(avPoint) ?? .zero
+                        handTracker.jointScreenPositions[point.key] = screenSpacePoint
+                    }
+                }
+            }
+            } catch {
+                print(error)
+            }
         }
     }
 }
