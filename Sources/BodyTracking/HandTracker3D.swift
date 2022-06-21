@@ -24,6 +24,9 @@ public class HandTracker3D: Entity {
     
     public private(set) var depthValues = [HandTracker2D.HandJointName : Float]()
     
+    ///The maximum distance value that will be allowed. This is usually set to the maximum distance that a user's hand would be expected to appear in front of the camera, allowing the system to prune values beyond this limit.
+    public var maxDistance: Float!
+    
     ///The frequency that the Vision request for detecting hands will be performed.
     ///
     ///Running the request every frame may decrease performance.
@@ -38,10 +41,11 @@ public class HandTracker3D: Entity {
         }
     }
     
-    public init(arView: ARView){
+    public init(arView: ARView, maxDistance: Float = 0.7){
         
         self.arView = arView
         self.twoDHandTracker = .init(arView: arView)
+        self.maxDistance = maxDistance
         super.init()
         
         SampleBufferDelegate.shared.frameRateRegulator.requestRate = .everyFrame
@@ -94,7 +98,8 @@ public class HandTracker3D: Entity {
         else {return nil}
         
         var depth = depth
-        if depth == 0.0 {
+        if depth == 0.0 ||
+        depth > maxDistance {
             depth = depthValues[.middleMCP] ?? depth
         } else {
             depthValues[jointName] = depth
