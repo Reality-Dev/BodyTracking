@@ -209,22 +209,14 @@ class SampleBufferDelegate {
             try handler.perform([self.handPoseRequest])
             // Continue only when a hand was detected in the frame.
             // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
-            guard let observations = self.handPoseRequest.results else {
+            guard let observations = self.handPoseRequest.results, observations.isEmpty == false else {
                 for handTracker in self.handTrackers {
                     if handTracker.handIsRecognized == true {
                         handTracker.handIsRecognized = false
-                    }
-                }
+                    }}
                 return
             }
-            for handTracker in self.handTrackers {
-                if handTracker.handIsRecognized == false {
-                    handTracker.handIsRecognized = true
-                }
-                if handTracker.handHasBeenInitiallyIdentified == false {
-                    handTracker.handHasBeenInitiallyIdentified = true
-                }
-            }
+
             let pairs = zip(observations, self.handTrackers)
             
             for (observation, handTracker) in pairs {
@@ -232,9 +224,13 @@ class SampleBufferDelegate {
                 let fingerPoints = try observation.recognizedPoints(.all)
 
                 DispatchQueue.main.async {
-                    for point in fingerPoints {
+                    var aboveConfidenceThreshold = false
+                    
+                    fingerPointsLoop: for point in fingerPoints {
                         
-                        guard point.value.confidence > handTracker.confidenceThreshold else {continue}
+                        guard point.value.confidence > handTracker.confidenceThreshold else {continue fingerPointsLoop}
+                        aboveConfidenceThreshold = true
+                        
                         let cgPoint = CGPoint(x: point.value.x, y: point.value.y)
                         
                         let avPoint = cgPoint.convertVisionToAVFoundation()
@@ -242,6 +238,18 @@ class SampleBufferDelegate {
                         
                         let screenSpacePoint = handTracker.arView?.convertAVFoundationToScreenSpace(avPoint) ?? .zero
                         handTracker.jointScreenPositions[point.key] = screenSpacePoint
+                    }
+
+                    if !aboveConfidenceThreshold {
+                        if handTracker.handIsRecognized == true {
+                            handTracker.handIsRecognized = false
+                    }} else {
+                        if handTracker.handIsRecognized == false {
+                            handTracker.handIsRecognized = true
+                        }
+                        if handTracker.handHasBeenInitiallyIdentified == false {
+                            handTracker.handHasBeenInitiallyIdentified = true
+                        }
                     }
                 }
             }

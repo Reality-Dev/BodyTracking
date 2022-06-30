@@ -27,6 +27,9 @@ public class HandTracker3D: Entity {
     ///The maximum distance value that will be allowed. This is usually set to the maximum distance that a user's hand would be expected to appear in front of the camera, allowing the system to prune values beyond this limit.
     public var maxDistance: Float!
     
+    ///Set to true to disable the hand tracker entity when a hand is not recognized in the current frame.
+    public var disableWhenUnrecognized = true
+    
     ///The frequency that the Vision request for detecting hands will be performed.
     ///
     ///Running the request every frame may decrease performance.
@@ -41,11 +44,14 @@ public class HandTracker3D: Entity {
         }
     }
     
-    public init(arView: ARView, maxDistance: Float = 0.7){
+    public init(arView: ARView,
+                maxDistance: Float = 0.7,
+                disableWhenUnrecognized: Bool = true){
         
         self.arView = arView
         self.twoDHandTracker = .init(arView: arView)
         self.maxDistance = maxDistance
+        self.disableWhenUnrecognized = disableWhenUnrecognized
         super.init()
         
         SampleBufferDelegate.shared.frameRateRegulator.requestRate = .everyFrame
@@ -70,6 +76,9 @@ public class HandTracker3D: Entity {
         if handHasBeenInitiallyIdentified == false && self.isEnabled == false {
             handHasBeenInitiallyIdentified = true
             self.isEnabled = true
+        } else if disableWhenUnrecognized,
+                  self.isEnabled != twoDHandTracker.handIsRecognized {
+            self.isEnabled = twoDHandTracker.handIsRecognized
         }
         
         for trackedEnt in trackedEntities {
