@@ -35,42 +35,45 @@ class ARSUIView2D: BodyARView {
         guard let _ = try? runBodyTrackingConfig2D() else { return }
         self.session.delegate = self
         
-        makeRightElbowJointVisible()
+        //makeRightElbowJointVisible()
         
-        makeOtherJointsVisible()
+        makeAllJointsVisible()
     }
     
     
     ///This is an example for how to show one joint.
     private func makeRightElbowJointVisible(){
         
-        let rightElbowCircle = makeCircle(circleRadius: 20)
+        let rightElbowCircle = makeCircle(circleRadius: 20, color: .init(red: 0, green: 1, blue: 0, alpha: 1))
         // ** HERE is the useful code: **
         //How to attach views to the skeleton:
         self.bodyTracker.attach(thisView: rightElbowCircle, toThisJoint: .right_forearm_joint)
-        
-        //Use this to display the angle formed at this joint.
-        //See the call to "angleBetween3Joints" below.
-        angleLabel = UILabel(frame: CGRect(origin: CGPoint(x: 0, y: 0), size: CGSize(width: 100, height: 50)))
-        rightElbowCircle.addSubview(angleLabel)
     }
     
     
     ///This is an example for how to show multiple joints, iteratively.
-    private func makeOtherJointsVisible(){
+    private func makeAllJointsVisible(){
         //There are more joints you could attach views to, I'm just using these.
-        let jointsToShow : [TwoDBodyJoint] = [.right_hand_joint, .right_shoulder_1_joint,
-                                           .left_forearm_joint, .left_hand_joint,
-                                           .left_shoulder_1_joint,
-                                           .head_joint, .neck_1_joint,
-                                           .root, .right_leg_joint,
-                                           .right_foot_joint, .left_leg_joint,
-                                           .left_foot_joint]
+        var jointsToShow: [TwoDBodyJoint] = TwoDBodyJoint.allCases
+        
+        //Two new joints for the ears were added in iOS 16.0
+        if #unavailable(iOS 16) {
+            jointsToShow.removeLast(2)
+        }
         
         //Another way to attach views to the skeletion, but iteratively this time:
-        jointsToShow.forEach { joint in
-            let circle = makeCircle(circleRadius: 20)
+        for (i, joint) in jointsToShow.enumerated() {
+            
+            let circle = makeCircle(circleRadius: 20, color: .init(red: CGFloat(i) / 19, green: CGFloat(i) / 19, blue: 1.0, alpha: 1.0))
             self.bodyTracker.attach(thisView: circle, toThisJoint: joint)
+            
+            //Add an angle label to the right_forearm_joint
+            if i == 3 {
+                //Use this to display the angle formed at this joint.
+                //See the call to "angleBetween3Joints" below.
+                angleLabel = UILabel(frame: CGRect(origin: CGPoint(x: 0, y: 0), size: CGSize(width: 100, height: 50)))
+                circle.addSubview(angleLabel)
+            }
         }
     }
     

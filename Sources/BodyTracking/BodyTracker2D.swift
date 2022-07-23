@@ -103,8 +103,16 @@ public class BodyTracker2D {
     
     private func populateJointPositions() {
         jointScreenPositions = []
-        for _ in 0...16 {
-            jointScreenPositions.append(CGPoint())
+        
+        //Two new joints for the ears were added in iOS 16.0
+        if #available(iOS 16, *) {
+            for _ in 0..<TwoDBodyJoint.allCases.count {
+                jointScreenPositions.append(CGPoint())
+            }
+        } else {
+            for _ in 0..<(TwoDBodyJoint.allCases.count - 2) {
+                jointScreenPositions.append(CGPoint())
+            }
         }
     }
     
@@ -134,6 +142,16 @@ public class BodyTracker2D {
     }
     
     private func updateJointScreenPositions(frame: ARFrame){
+        /*
+         BETA ISSUES: As of 07/23/2022:
+         These have NOT yet been updated with the two new ear joints:
+            ARSkeletonDefinition.defaultBody2D.jointCount
+            ARSkeletonDefinition.defaultBody2D.jointNames
+            ARSkeletonDefinition.defaultBody2D.jointNames.count
+         But this HAS been updated with the two new ear joints:
+            ARFrame.detectedBody.skeleton.jointLandmarks
+         */
+        
         guard let detectedBody = frame.detectedBody else {
             if bodyIsDetected == true {bodyIsDetected = false}
             return
@@ -166,7 +184,7 @@ public class BodyTracker2D {
         guard frame.detectedBody != nil,
               jointScreenPositions.count > 0
         else {return}
-        
+
         for view in trackedViews {
             let jointIndex = view.key.rawValue
             let screenPosition = jointScreenPositions[jointIndex]
@@ -287,9 +305,19 @@ public extension CGPoint {
 }
 
 
+/*
+ BETA ISSUES: As of 07/23/2022:
+ These have NOT yet been updated with the two new ear joints:
+    ARSkeletonDefinition.defaultBody2D.jointCount
+    ARSkeletonDefinition.defaultBody2D.jointNames
+    ARSkeletonDefinition.defaultBody2D.jointNames.count
+ But this HAS been updated with the two new ear joints:
+    ARFrame.detectedBody.skeleton.jointLandmarks
+ */
+
 ///ARSkeleton.JointName only contains 8 of these but this includes all of them :)
 ///
-///Includes 17 joints.
+///Includes 19 joints.
 ///- Use TwoDBodyJoint.allCases to access an array of all joints
 public enum TwoDBodyJoint: Int, CaseIterable {
     case head_joint = 0
@@ -309,5 +337,6 @@ public enum TwoDBodyJoint: Int, CaseIterable {
     case right_eye_joint = 14
     case left_eye_joint = 15
     case root = 16 //hips
+    case right_ear_joint = 17
+    case left_ear_joint = 18
 }
-
