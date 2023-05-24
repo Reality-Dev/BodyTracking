@@ -222,12 +222,12 @@ public class TrackedBodyJoint: Entity {
 ///- Use ThreeDBodyJoint.allCases to access an array of all joints
 public enum ThreeDBodyJoint: Int, CaseIterable {
     
-    private func getParentJoint() -> ThreeDBodyJoint {
+    public func getParentJoint() -> ThreeDBodyJoint {
         let parentIndex = ARSkeletonDefinition.defaultBody3D.parentIndices[self.rawValue]
         return ThreeDBodyJoint(rawValue: parentIndex) ?? .root
     }
     
-    private func getChildJoints() -> [ThreeDBodyJoint] {
+    public func getChildJoints() -> [ThreeDBodyJoint] {
         
         var childJoints = [ThreeDBodyJoint]()
         
