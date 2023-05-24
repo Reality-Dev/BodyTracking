@@ -128,14 +128,20 @@ public class BodyEntity3D: Entity {
         }
     }
     
-    public func jointModelTransform(for joint: ThreeDBodyJoint) -> simd_float4x4 {
-        if let trackedJoint = self.body3D.trackedJoints.first(where: {$0.jointName == joint}) {
-            return trackedJoint.transformMatrix(relativeTo: self)
-        } else if let bodyAnchor = self.arBodyAnchor {
+    public func jointModelTransform(for joint: ThreeDBodyJoint) -> simd_float4x4? {
+        if let bodyAnchor = self.arBodyAnchor {
                 return bodyAnchor.skeleton.jointModelTransforms[joint.rawValue]
-        } else {
-            return Transform().matrix
+        } else if let trackedJoint = self.body3D.trackedJoints.first(where: {$0.jointName == joint}) {
+                return trackedJoint.transformMatrix(relativeTo: self)
         }
+        return nil
+    }
+    
+    public func jointLocalTransform(for joint: ThreeDBodyJoint) -> simd_float4x4? {
+        if let bodyAnchor = self.arBodyAnchor {
+            return bodyAnchor.skeleton.jointLocalTransforms[joint.rawValue]
+        }
+        return nil
     }
     
     //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
@@ -221,27 +227,6 @@ public class TrackedBodyJoint: Entity {
 ///Includes 91 joints total, 28 tracked.
 ///- Use ThreeDBodyJoint.allCases to access an array of all joints
 public enum ThreeDBodyJoint: Int, CaseIterable {
-    
-    public func getParentJoint() -> ThreeDBodyJoint {
-        let parentIndex = ARSkeletonDefinition.defaultBody3D.parentIndices[self.rawValue]
-        return ThreeDBodyJoint(rawValue: parentIndex) ?? .root
-    }
-    
-    public func getChildJoints() -> [ThreeDBodyJoint] {
-        
-        var childJoints = [ThreeDBodyJoint]()
-        
-        let default3DBody = ARSkeletonDefinition.defaultBody3D
-        let parentIndices = default3DBody.parentIndices
-        
-        for (jointIndex, parentIndex) in parentIndices.enumerated() {
-            if parentIndex == self.rawValue,
-               let childJoint = ThreeDBodyJoint(rawValue: jointIndex){
-                childJoints.append(childJoint)
-            }
-        }
-        return childJoints
-    }
     
 //Not-indented joints are tracked (their transforms follow the person's body).
 //Indented joints are untracked (they always maintain the same transform relative to their parent joint).
@@ -336,6 +321,27 @@ public enum ThreeDBodyJoint: Int, CaseIterable {
         case right_handThumb_1_joint = 88
         case right_handThumb_2_joint = 89
         case right_handThumbEnd_joint = 90
+    
+    public func getParentJoint() -> ThreeDBodyJoint {
+        let parentIndex = ARSkeletonDefinition.defaultBody3D.parentIndices[self.rawValue]
+        return ThreeDBodyJoint(rawValue: parentIndex) ?? .root
+    }
+    
+    public func getChildJoints() -> [ThreeDBodyJoint] {
+        
+        var childJoints = [ThreeDBodyJoint]()
+        
+        let default3DBody = ARSkeletonDefinition.defaultBody3D
+        let parentIndices = default3DBody.parentIndices
+        
+        for (jointIndex, parentIndex) in parentIndices.enumerated() {
+            if parentIndex == self.rawValue,
+               let childJoint = ThreeDBodyJoint(rawValue: jointIndex){
+                childJoints.append(childJoint)
+            }
+        }
+        return childJoints
+    }
     
     ///Use this function to determine if a particular joint is tracked or untracked.
     public func isTracked() -> Bool {
