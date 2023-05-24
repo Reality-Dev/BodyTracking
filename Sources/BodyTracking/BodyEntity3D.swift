@@ -111,7 +111,7 @@ public class BodyEntity3D: Entity {
             joint = jointLocal
         } else { //body3DComponent.trackedJoints does Not contain this joint yet.
             joint = TrackedBodyJoint(jointName: jointName)
-            self.self.addChild(joint)
+            self.addChild(joint)
             if let jointModelTransforms = ARSkeletonDefinition.defaultBody3D.neutralBodySkeleton3D?.jointModelTransforms{
                 joint.setTransformMatrix(jointModelTransforms[jointName.rawValue], relativeTo: self)
             }
@@ -221,6 +221,27 @@ public class TrackedBodyJoint: Entity {
 ///Includes 91 joints total, 28 tracked.
 ///- Use ThreeDBodyJoint.allCases to access an array of all joints
 public enum ThreeDBodyJoint: Int, CaseIterable {
+    
+    private func getParentJoint() -> ThreeDBodyJoint {
+        let parentIndex = ARSkeletonDefinition.defaultBody3D.parentIndices[self.rawValue]
+        return ThreeDBodyJoint(rawValue: parentIndex) ?? .root
+    }
+    
+    private func getChildJoints() -> [ThreeDBodyJoint] {
+        
+        var childJoints = [ThreeDBodyJoint]()
+        
+        let default3DBody = ARSkeletonDefinition.defaultBody3D
+        let parentIndices = default3DBody.parentIndices
+        
+        for (jointIndex, parentIndex) in parentIndices.enumerated() {
+            if parentIndex == self.rawValue,
+               let childJoint = ThreeDBodyJoint(rawValue: jointIndex){
+                childJoints.append(childJoint)
+            }
+        }
+        return childJoints
+    }
     
 //Not-indented joints are tracked (their transforms follow the person's body).
 //Indented joints are untracked (they always maintain the same transform relative to their parent joint).

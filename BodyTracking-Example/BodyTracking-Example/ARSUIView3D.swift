@@ -41,11 +41,13 @@ class ARSUIView3D: BodyARView {
     
     ///This is an example for how to show multiple joints, iteratively.
     private func makeTrackedJointsVisible(){
+        
+        let sphere = Entity.makeSphere(radius: 0.05)
+        
         //There are more joints you could attach entities to, I'm just using these.
         //Another way to attach entities to the skeletion, but iteratively this time:
         ThreeDBodyJoint.trackedJoints.forEach { joint in
-            let sphere = Entity.makeSphere(radius: 0.05)
-            bodyEntity.attach(thisEntity: sphere, toThisJoint: joint)
+            bodyEntity.attach(thisEntity: sphere.clone(recursive: true), toThisJoint: joint)
         }
     }
     
