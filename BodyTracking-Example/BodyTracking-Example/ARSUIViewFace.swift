@@ -7,7 +7,7 @@
 
 import ARKit
 import RealityKit
-//import BodyTracking
+import BodyTracking
 
 class ARSUIViewFace: BodyARView {
     

@@ -7,7 +7,7 @@
 
 import ARKit
 import RealityKit
-//import BodyTracking
+import BodyTracking
 
 class ARSUIViewPersonSegmentation: BodyARView {
     
@@ -16,8 +16,7 @@ class ARSUIViewPersonSegmentation: BodyARView {
         super.init(frame: frameRect)
 
         //Use this function to enable person segmentation occlusion.
-        guard let _ = try? self.enableOcclusion() else { return }
-        
+        try? self.enableOcclusion()
         
         //Create a background so we can see the person segmentation working.
         createBackground()

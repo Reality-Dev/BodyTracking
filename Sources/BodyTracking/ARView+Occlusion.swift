@@ -42,8 +42,7 @@ public extension ARView {
         } else {
             config = ARWorldTrackingConfiguration()
         }
-            config.frameSemantics.remove(.personSegmentationWithDepth)
-            config.frameSemantics.remove(.personSegmentation)
+        config.frameSemantics.remove([.personSegmentationWithDepth, .personSegmentation])
         self.session.run(config)
     }
     

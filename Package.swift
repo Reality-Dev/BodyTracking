@@ -9,9 +9,11 @@ let package = Package(
   products: [
     .library(name: "BodyTracking", targets: ["BodyTracking"])
   ],
-  dependencies: [],
+  dependencies: [
+    .package(url: "https://github.com/Reality-Dev/RealityKit-Utilities.git", from: "1.0.0"),
+  ],
   targets: [
-    .target(name: "BodyTracking", dependencies: [])
+    .target(name: "BodyTracking", dependencies: [.product(name: "RKUtilities", package: "RealityKitUtilities")])
   ],
   swiftLanguageVersions: [.v5]
 )

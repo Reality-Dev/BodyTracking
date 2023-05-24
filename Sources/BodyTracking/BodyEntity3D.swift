@@ -355,6 +355,4 @@ public enum ThreeDBodyJoint: Int, CaseIterable {
         .right_forearm_joint,
         .right_hand_joint
     ]
-    
-
 }

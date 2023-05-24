@@ -8,36 +8,7 @@
 import simd
 import UIKit
 import RealityKit
-
-public extension Entity {
-    
-    static func makeSphere(color: UIColor = .blue,
-                            radius: Float = 0.15,
-                            isMetallic: Bool = true) -> ModelEntity {
-        
-        let sphereMesh = MeshResource.generateSphere(radius: radius)
-        let sphereMaterial = SimpleMaterial.init(color: color, isMetallic: isMetallic)
-        return ModelEntity(mesh: sphereMesh,
-                           materials: [sphereMaterial])
-    }
-    
-    ///Recursively searches through all descendants (depth first) for an Entity that satisfies the given predicate, Not just through the direct children.
-    func findEntity(where predicate: (Entity) -> Bool) -> Entity? {
-        for child in self.children {
-            if predicate(child) { return child }
-            else if let satisfier = child.findEntity(where: predicate) {return satisfier}
-        }
-        return nil
-    }
-    
-    ///Recursively searches through all descendants (depth first) for a ModelEntity, Not just through the direct children.
-    ///Reutrns the first model entity it finds.
-    ///Returns the input entity if it is a model entity.
-    func findModelEntity() -> ModelEntity? {
-        if self is ModelEntity { return self as? ModelEntity }
-        return self.findEntity(where: {$0 is ModelEntity}) as? ModelEntity
-    }
-}
+import RKUtilities
 
 public extension UIView {
     func showAlert(title: String, message: String){
@@ -55,40 +26,6 @@ public extension simd_float3 {
         return (oldVal * smoothingAmount) + (self * ( 1 - smoothingAmount))
     }
 }
-
-
-import simd
-public extension float4x4 {
-  var translation: SIMD3<Float> {
-    get {
-      let translation = columns.3
-      return SIMD3<Float>(translation.x, translation.y, translation.z)
-    }
-  }
-    
-    mutating func setTranslation(_ newVal: simd_float3) {
-        columns.3 = [newVal.x, newVal.y, newVal.z, columns.3.w]
-    }
-    
-    var orientation: simd_quatf {
-      return simd_quaternion(self)
-    }
-}
-
-// MARK: - Comparable extensions
-public extension Comparable {
-    
-    /// Returns self clamped between two values.
-    /// - If self is already between the two input values, returns self. If self is below a, returns a. If self is above b, returns b.
-    /// - Parameters:
-    ///   - a: The lower bound
-    ///   - b: The upper bound.
-    /// - Returns: self clamped between the two input values.
-    func clamped(_ a: Self, _ b: Self) -> Self {
-        min(max(self, a), b)
-    }
-}
-
 
 
 //  Created by Vladislav Grigoryev on 27.05.2020.
