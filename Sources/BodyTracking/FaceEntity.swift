@@ -127,8 +127,6 @@ public class FaceEntity: Entity, HasAnchoring {
             self.blendShapes[blendShape.key] = blendShape.value as? Float
         }
     }
-    
-
 }
 
 

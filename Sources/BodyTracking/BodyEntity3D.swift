@@ -98,11 +98,12 @@ public class BodyEntity3D: Entity {
 
     
     /// Use this function to attach an entity to a particular joint.
-    /// - After calling this function, an entity will follow the transform of a particular joint every frame.
-    /// - If you want to offset an entity from a joint transform, then attach one entity to that joint and then attach another entity to that entity, now using the offset.
+    ///
+    /// After calling this function, an entity will follow the transform of a particular joint every frame.
     /// - Parameters:
     ///   - entity: The entity to attach.
     ///   - jointName: The joint to attach the entity to.
+    ///   - preservingWorldTransform: A Boolean that you set to true to preserve the entity’s world transform, or false to preserve its relative transform. Use true when you want a model to keep its effective location and size within a scene. If you want to offset an entity from a joint transform, then set this to false.
     public func attach(thisEntity entity: Entity,
                 toThisJoint jointName: ThreeDBodyJoint,
                 preservingWorldTransform: Bool = false){
@@ -118,6 +119,7 @@ public class BodyEntity3D: Entity {
             body3D.trackedJoints.insert(joint)
         }
         joint.addChild(entity, preservingWorldTransform: preservingWorldTransform)
+        if !preservingWorldTransform { entity.transform = .init() }
     }
     
     ///Removes this joint and all attached entities.
