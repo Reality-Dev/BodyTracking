@@ -10,6 +10,7 @@ import UIKit
 import RealityKit
 import RKUtilities
 
+//MARK: - UIView extension
 public extension UIView {
     func showAlert(title: String, message: String){
         guard UIApplication.shared.windows.count == 1 else { return}
@@ -20,14 +21,13 @@ public extension UIView {
     }
 }
 
-public extension simd_float3 {
-    func smoothed(oldVal: simd_float3, amount smoothingAmount: Float) -> simd_float3 {
-        let smoothingAmount = smoothingAmount.clamped(0, 1)
-        return (oldVal * smoothingAmount) + (self * ( 1 - smoothingAmount))
-    }
+//MARK: - Interpolation
+func lerp(from: simd_float3, to: simd_float3, t: Float) -> simd_float3 {
+    return from + ((to - from) * t)
 }
 
 
+//MARK: - WeakCollection
 //  Created by Vladislav Grigoryev on 27.05.2020.
 //  Copyright © 2020 GORA Studio. https://gora.studio
 //

@@ -3,7 +3,7 @@ import RealityKit
 import ARKit
 import Combine
 
-
+//MARK: - Configuration
 public extension ARView {
     ///If ARBodyTrackingConfiguration is supported on this device, run this type of configuration on this ARView's session.
     ///
@@ -23,7 +23,7 @@ public extension ARView {
     }
 }
 
-
+//MARK: - Body3DComponent
 public struct Body3DComponent: Component {
     
     static var isRegistered = false
@@ -33,11 +33,17 @@ public struct Body3DComponent: Component {
     ///An amount, from 0 to 1, that the joint movements are smoothed by.
     public var smoothingAmount: Float = 0
     
+    fileprivate var needsSmoothing: Bool
+    
+    ///This is used for smoothing. The BodyEntity3D is attached to an anchor entity which overrides the transforms we set.
+    fileprivate var lastRootTransform = Transform()
+    
     public init(smoothingAmount: Float,
                 trackedJoints: Set<TrackedBodyJoint> = []){
-        register()
         self.smoothingAmount = smoothingAmount
+        self.needsSmoothing = smoothingAmount > 0
         self.trackedJoints = trackedJoints
+        register()
     }
     
     private func register(){
@@ -48,6 +54,7 @@ public struct Body3DComponent: Component {
     }
 }
 
+//MARK: - BodyEntity3D
 public class BodyEntity3D: Entity {
     
     internal weak var arView : ARView!
@@ -57,10 +64,12 @@ public class BodyEntity3D: Entity {
     
     public var body3D: Body3DComponent!
     
+    public private(set) var didInitiallyDetectBody = false
+    
     public private(set) var arBodyAnchor: ARBodyAnchor?
     
     //Position 0,0,0 in world space.
-    private var sceneAnchor = AnchorEntity(.world(transform: .init(diagonal: [1,1,1,1])))
+    private var bodyAnchor = AnchorEntity(.body)
     
     public required init(arView: ARView,
                          smoothingAmount: Float = 0) {
@@ -69,11 +78,14 @@ public class BodyEntity3D: Entity {
         
         super.init()
         
-        self.arView.scene.addAnchor(sceneAnchor)
+        self.arView.scene.addAnchor(bodyAnchor)
         
         //An AnchorEntity targeting a body (at the hip joint) is not smoothed automatically, so we just use this instead of giving the BodyEntity3D an AnchoringComponent targeting a body.
         //self acts as the root Entity located at the hip joint, and the scene anchor is always at position 0,0,0 in world space.
-        sceneAnchor.addChild(self)
+        bodyAnchor.addChild(self)
+        
+        //Leave disabled until a body is detected.
+        self.isEnabled = false
 
         self.subscribeToUpdates()
     }
@@ -152,6 +164,7 @@ public class BodyEntity3D: Entity {
             if let bodyAnchor = self.arView.session.currentFrame?.anchors.first(where: {$0 is ARBodyAnchor}) as? ARBodyAnchor {
                     self.arBodyAnchor = bodyAnchor
                     //Must access the frame's anchors every frame. Storing the ARBodyAnchor does not give updates.
+
                     self.updateJointsWith(arBodyAnchor: bodyAnchor)
             }
         }
@@ -159,56 +172,78 @@ public class BodyEntity3D: Entity {
     
     private func updateJointsWith(arBodyAnchor: ARBodyAnchor){
         
-        if self.body3D.smoothingAmount == 0 {
-            self.setTransformMatrix(arBodyAnchor.transform, relativeTo: nil)
-        } else {
+        if self.body3D.needsSmoothing {
             smoothHipMotion(newTransform: arBodyAnchor.transform)
         }
         
         for trackedJoint in body3D.trackedJoints {
             let jointIndex = trackedJoint.jointName.rawValue
             let newTransform = arBodyAnchor.skeleton.jointModelTransforms[jointIndex]
-            if self.body3D.smoothingAmount == 0 {
-                trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
-            } else {
+            if self.body3D.needsSmoothing {
                 smoothMotion(trackedJoint: trackedJoint, newTransform: newTransform)
+            } else {
+                trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
             }
         }
     }
     
+    //MARK: - Smoothing
+    
+    //TODO: Use SmoothDamp instead of Lerp.
     private func smoothHipMotion(newTransform: simd_float4x4){
         
         //Prevent the object from flying onto the body from 0,0,0 in world space initially.
-        if self.self.position(relativeTo: nil) == .zero {
+        if self.didInitiallyDetectBody == false {
             self.setTransformMatrix(newTransform, relativeTo: nil)
+            body3D.lastRootTransform = Transform(matrix: newTransform)
+            self.didInitiallyDetectBody = true
+            self.isEnabled = true
             return
         }
         
-        let newOrientation = simd_slerp(self.orientation(relativeTo: nil), newTransform.orientation, (1 - body3D.smoothingAmount))
+        let t = (1 - body3D.smoothingAmount)
+        
+        let lastTransform = body3D.lastRootTransform
+        
+        let newOrientation = simd_slerp(lastTransform.rotation,
+                                        newTransform.orientation,
+                                        t)
 
-        //Weight the old translation more than the new translation.
-        let newTranslation = newTransform.translation.smoothed(oldVal: self.position(relativeTo: nil), amount: body3D.smoothingAmount)
+        let newTranslation = lerp(from: lastTransform.translation,
+                                  to: newTransform.translation,
+                                  t: t)
             
-        let newTransform = Transform(scale: .one, rotation: newOrientation, translation: newTranslation).matrix
-        self.setTransformMatrix(newTransform, relativeTo: nil)
+        let newTransform = Transform(scale: .one,
+                                     rotation: newOrientation,
+                                     translation: newTranslation)
+        
+        self.setTransformMatrix(newTransform.matrix, relativeTo: nil)
+        
+        self.body3D.lastRootTransform = newTransform
     }
     
     private func smoothMotion(trackedJoint: TrackedBodyJoint, newTransform: simd_float4x4){
 
         //Scale isn't changing for body joints, so don't smooth that.
         
-        let newOrientation = simd_slerp(trackedJoint.orientation, newTransform.orientation, (1 - self.body3D.smoothingAmount))
-
-        //Weight the old translation more than the new translation.
-        let newTranslation = newTransform.translation.smoothed(oldVal: trackedJoint.position, amount: self.body3D.smoothingAmount)
+        let t = (1 - body3D.smoothingAmount)
+        
+        let newOrientation = simd_slerp(trackedJoint.orientation, newTransform.orientation, t)
+        
+        let newTranslation = lerp(from: trackedJoint.position,
+                                  to: newTransform.translation,
+                                  t: t)
             
-        let newTransform = Transform(scale: .one, rotation: newOrientation, translation: newTranslation).matrix
+        let newTransform = Transform(scale: .one,
+                                     rotation: newOrientation,
+                                     translation: newTranslation).matrix
+        
         trackedJoint.setTransformMatrix(newTransform, relativeTo: self)
     }
 }
 
 
-
+//MARK: - TrackedBodyJoint
 public class TrackedBodyJoint: Entity {
     
     public private(set) var jointName: ThreeDBodyJoint!
@@ -223,7 +258,7 @@ public class TrackedBodyJoint: Entity {
     }
 }
 
-
+//MARK: - ThreeDBodyJoint
 ///ARSkeleton.JointName only contains 8 of these but this includes all of them :)
 ///
 ///Includes 91 joints total, 28 tracked.
