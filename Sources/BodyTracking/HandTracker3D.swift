@@ -69,7 +69,8 @@ public class HandTracker3D: Entity {
             self.twoDHandTracker.handHasBeenInitiallyIdentified,
             let arView = arView,
             let currentFrame = arView.session.currentFrame,
-            let sceneDepth = currentFrame.estimatedDepthData
+            //smoothedSceneDepth works much better than estimatedDepthData.
+            let sceneDepth = currentFrame.smoothedSceneDepth?.depthMap
         else {return}
 
         //Allow developers to disable this entity for other reasons after the hand has initially been identified.
@@ -81,16 +82,27 @@ public class HandTracker3D: Entity {
             self.isEnabled = twoDHandTracker.handIsRecognized
         }
         
+        updatePosition(of: self, for: .wrist, sceneDepth: sceneDepth)
+        
         for trackedEnt in trackedEntities {
-            guard
-                let screenPosition = self.twoDHandTracker.jointScreenPositions[trackedEnt.key],
-                let avPosition = self.twoDHandTracker.jointAVFoundationPositions[trackedEnt.key],
-                let depthAtPoint = sceneDepth.value(from: avPosition),
-                let worldPosition = worldPosition(jointName: trackedEnt.key, screenPosition: screenPosition, depth: depthAtPoint)
-            else {continue}
-            
-            trackedEnt.value.setPosition(worldPosition, relativeTo: nil)
+
+            updatePosition(of: trackedEnt.value,
+                           for: trackedEnt.key,
+                           sceneDepth: sceneDepth)
         }
+    }
+    
+    private func updatePosition(of trackedEnt: Entity,
+                                for joint: HandTracker2D.HandJointName,
+                                sceneDepth: CVPixelBuffer) {
+        guard
+            let screenPosition = self.twoDHandTracker.jointScreenPositions[joint],
+            let avPosition = self.twoDHandTracker.jointAVFoundationPositions[joint],
+            let depthAtPoint = sceneDepth.value(from: avPosition),
+            let worldPosition = worldPosition(jointName: joint, screenPosition: screenPosition, depth: depthAtPoint)
+        else {return}
+        
+        trackedEnt.setPosition(worldPosition, relativeTo: nil)
     }
     
     /// Get the world-space position from a UIKit screen point and a depth value

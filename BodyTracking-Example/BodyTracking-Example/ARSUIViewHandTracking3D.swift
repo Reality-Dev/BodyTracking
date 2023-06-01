@@ -50,10 +50,10 @@ class ARSUIViewHandTracking3D: BodyARView {
         let configuration = ARWorldTrackingConfiguration()
         
         //Goes with (currentFrame.smoothedSceneDepth ?? currentFrame.sceneDepth)?.depthMap
-        //let frameSemantics: ARConfiguration.FrameSemantics = [.smoothedSceneDepth, .sceneDepth]
+        let frameSemantics: ARConfiguration.FrameSemantics = [.smoothedSceneDepth, .sceneDepth]
         
         //Goes with currentFrame.estimatedDepthData
-        let frameSemantics: ARConfiguration.FrameSemantics = .personSegmentationWithDepth
+        //let frameSemantics: ARConfiguration.FrameSemantics = .personSegmentationWithDepth
         
         if ARWorldTrackingConfiguration.supportsFrameSemantics(frameSemantics) {
             configuration.frameSemantics.insert(frameSemantics)
@@ -64,6 +64,11 @@ class ARSUIViewHandTracking3D: BodyARView {
     
     ///This is an example for how to show multiple joints, iteratively.
     private func makeHandJointsVisible(){
+        
+        let size = simd_float3(repeating: 0.05)
+        let modelComp = ModelComponent(mesh: .generateBox(size: size), materials: [SimpleMaterial(color: .red, isMetallic: true)])
+        
+        handTracker.components.set(modelComp)
         
         //Another way to attach views to the skeletion, but iteratively this time:
         HandTracker2D.allHandJoints.forEach { joint in
