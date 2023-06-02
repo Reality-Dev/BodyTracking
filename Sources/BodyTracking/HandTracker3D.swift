@@ -9,6 +9,11 @@ import Foundation
 import RealityKit
 import CoreVideo
 
+public enum DepthBufferSelection {
+    case sceneDepth
+    case smoothedSceneDepth
+    case personSegmentationWithDepth
+}
 @available(iOS 14.0, *)
 public class HandTracker3D: Entity {
     
@@ -19,6 +24,8 @@ public class HandTracker3D: Entity {
     internal weak var arView : ARView?
     
     private var handHasBeenInitiallyIdentified = false
+    
+    public var depthBufferSelection: DepthBufferSelection = .smoothedSceneDepth
     
     public private(set) var trackedEntities = [HandTracker2D.HandJointName : Entity]()
     
@@ -46,12 +53,14 @@ public class HandTracker3D: Entity {
     
     public init(arView: ARView,
                 maxDistance: Float = 0.7,
-                disableWhenUnrecognized: Bool = true){
+                disableWhenUnrecognized: Bool = true,
+                depthBufferSelection: DepthBufferSelection = .smoothedSceneDepth){
         
         self.arView = arView
         self.twoDHandTracker = .init(arView: arView)
         self.maxDistance = maxDistance
         self.disableWhenUnrecognized = disableWhenUnrecognized
+        self.depthBufferSelection = depthBufferSelection
         super.init()
         
         SampleBufferDelegate.shared.frameRateRegulator.requestRate = .everyFrame
@@ -65,13 +74,24 @@ public class HandTracker3D: Entity {
     
     //Runs every frame.
     internal func update(){
+
         guard
             self.twoDHandTracker.handHasBeenInitiallyIdentified,
             let arView = arView,
-            let currentFrame = arView.session.currentFrame,
-            //smoothedSceneDepth works much better than estimatedDepthData.
-            let sceneDepth = currentFrame.smoothedSceneDepth?.depthMap
+            let currentFrame = arView.session.currentFrame
         else {return}
+        
+        var sceneDepth: CVPixelBuffer?
+        switch self.depthBufferSelection {
+        case .sceneDepth:
+            sceneDepth = currentFrame.sceneDepth?.depthMap
+        case .smoothedSceneDepth:
+            //smoothedSceneDepth works much better than estimatedDepthData.
+            sceneDepth = currentFrame.smoothedSceneDepth?.depthMap
+        case .personSegmentationWithDepth:
+            sceneDepth = currentFrame.estimatedDepthData
+        }
+        guard let sceneDepth else {return}
 
         //Allow developers to disable this entity for other reasons after the hand has initially been identified.
         if handHasBeenInitiallyIdentified == false && self.isEnabled == false {
