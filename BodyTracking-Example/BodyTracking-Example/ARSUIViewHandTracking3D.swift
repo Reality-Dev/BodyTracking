@@ -33,6 +33,8 @@ class ARSUIViewHandTracking3D: BodyARView {
         
         self.handTracker = HandTracker3D(arView: self)
         
+        handTracker.name = "Hand Tracker 3D"
+        
         let sceneAnchor = AnchorEntity()
         
         self.scene.addAnchor(sceneAnchor)
@@ -69,11 +71,11 @@ class ARSUIViewHandTracking3D: BodyARView {
         let modelComp = ModelComponent(mesh: .generateBox(size: size), materials: [SimpleMaterial(color: .red, isMetallic: true)])
         
         handTracker.components.set(modelComp)
-        
+        let sphere = Entity.makeSphere(color: .white, radius: 0.01, isMetallic: true)
         //Another way to attach views to the skeletion, but iteratively this time:
         HandTracker2D.allHandJoints.forEach { joint in
-            let sphere = Entity.makeSphere(color: .white, radius: 0.01, isMetallic: true)
-            self.handTracker.attach(thisEnt: sphere, toThisJoint: joint)
+            let clone = sphere.clone(recursive: true)
+            self.handTracker.attach(thisEnt: clone, toThisJoint: joint)
         }
     }
 

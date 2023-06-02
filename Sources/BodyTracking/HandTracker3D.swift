@@ -135,11 +135,21 @@ public class HandTracker3D: Entity {
     ///Allows only one view per joint.
     ///- This will add `thisView` to ARView automatically.
     ///- If you would like to attach more than one view per joint, then try attaching additional views to the view that is already attached to this joint.
-    public func attach(thisEnt: Entity, toThisJoint thisJoint: HandTracker2D.HandJointName){
+    public func attach(thisEnt: Entity, toThisJoint thisJoint: HandTracker2D.HandJointName, preservingWorldTransform: Bool = false){
+        let jointEnt: Entity
         
-        self.trackedEntities[thisJoint] = thisEnt
+        if let existingEnt = self.trackedEntities[thisJoint] {
+            jointEnt = existingEnt
+        } else {
+            jointEnt = Entity()
+            self.trackedEntities[thisJoint] = jointEnt
+        }
         
-        self.addChild(thisEnt)
+        jointEnt.addChild(thisEnt, preservingWorldTransform: preservingWorldTransform)
+        
+        self.addChild(jointEnt)
+        
+        if !preservingWorldTransform { thisEnt.transform = .init() }
     }
     
     public func removeEnt(_ joint: HandTracker2D.HandJointName){
