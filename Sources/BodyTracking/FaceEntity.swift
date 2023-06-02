@@ -72,7 +72,7 @@ public class FaceEntity: Entity, HasAnchoring {
     ///If this value is true, the object’s transform currently matches the position and orientation of the real-world object it represents.
     ///
     ///If this value is false, the object is not guaranteed to match the movement of its corresponding real-world feature, even if it remains in the visible scene.
-    var faceIsTracked: Bool {
+    public var faceIsTracked: Bool {
         return arFaceAnchor?.isTracked ?? false
     }
     
