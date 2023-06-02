@@ -3,6 +3,7 @@ import RealityKit
 import Combine
 import ARKit
 import UIKit
+import RKUtilities
 
 
 public extension ARView {
@@ -58,11 +59,24 @@ public struct FaceComponent: Component {
 
 public class FaceEntity: Entity, HasAnchoring {
     
-    internal weak var arView : ARView!
+    internal weak var arView : ARView?
+    
+    private var viewBounds: CGRect = .zero
 
     private var cancellableForUpdate : Cancellable?
     
     public var face = FaceComponent()
+    
+    ///A Boolean value that indicates whether this object's transform accurately represents the trasform of the real-world face for the current frame.
+    ///
+    ///If this value is true, the object’s transform currently matches the position and orientation of the real-world object it represents.
+    ///
+    ///If this value is false, the object is not guaranteed to match the movement of its corresponding real-world feature, even if it remains in the visible scene.
+    var faceIsTracked: Bool {
+        return arFaceAnchor?.isTracked ?? false
+    }
+    
+    public private(set) var arFaceAnchor: ARFaceAnchor?
 
     ///Identifiers for specific facial features with coefficients describing the relative movements of those features.
     ///
@@ -83,7 +97,12 @@ public class FaceEntity: Entity, HasAnchoring {
         super.init()
         //This will automatically attach this entity to the face.
         self.anchoring = AnchoringComponent(.face)
-        self.arView.scene.addAnchor(self)
+        
+        DispatchQueue.main.async {
+            self.viewBounds = arView.bounds
+        }
+        
+        self.arView?.scene.addAnchor(self)
         self.subscribeToUpdates()
     }
 
@@ -112,7 +131,8 @@ public class FaceEntity: Entity, HasAnchoring {
     //Subscribe to scene updates so we can run code every frame without a delegate.
     //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     private func subscribeToUpdates(){
-        self.cancellableForUpdate = self.arView.scene.subscribe(to: SceneEvents.Update.self, updateFace)
+        guard let arView else {return}
+        self.cancellableForUpdate = arView.scene.subscribe(to: SceneEvents.Update.self, updateFace)
     }
     
     
@@ -120,12 +140,20 @@ public class FaceEntity: Entity, HasAnchoring {
     
     //Run this code every frame to get the joints.
     public func updateFace(event: SceneEvents.Update? = nil) {
-        guard let faceAnchor = self.arView.session.currentFrame?.anchors.first(where: {$0 is ARFaceAnchor}) as? ARFaceAnchor else {return}
+
+        guard
+            let arView,
+            let faceAnchor = arView.session.currentFrame?.anchors.first(where: {$0 is ARFaceAnchor}) as? ARFaceAnchor else {return}
+        
+        self.arFaceAnchor = faceAnchor
+
         face.rEyeTransform = faceAnchor.rightEyeTransform
         face.lEyeTransform = faceAnchor.leftEyeTransform
+        var blendShapes = [ARFaceAnchor.BlendShapeLocation : Float]()
         for blendShape in faceAnchor.blendShapes {
-            self.blendShapes[blendShape.key] = blendShape.value as? Float
+            blendShapes[blendShape.key] = blendShape.value as? Float
         }
+        self.blendShapes = blendShapes
     }
 }
 

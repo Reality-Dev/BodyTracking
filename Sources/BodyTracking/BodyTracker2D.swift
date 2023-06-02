@@ -54,7 +54,7 @@ public extension ARView {
 
 public class BodyTracker2D {
     
-    internal weak var arView : ARView!
+    internal weak var arView : ARView?
     
     private var cancellableForUpdate : Cancellable?
     
@@ -98,7 +98,8 @@ public class BodyTracker2D {
     //Subscribe to scene updates so we can run code every frame without a delegate.
     //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     private func subscribeToUpdates(){
-        self.cancellableForUpdate = self.arView.scene.subscribe(to: SceneEvents.Update.self, updateBody)
+        guard let arView else {return}
+        self.cancellableForUpdate = arView.scene.subscribe(to: SceneEvents.Update.self, updateBody)
     }
     
     private func populateJointPositions() {
@@ -122,7 +123,7 @@ public class BodyTracker2D {
     public func attach(thisView: UIView, toThisJoint thisJoint: TwoDBodyJoint){
         self.trackedViews[thisJoint] = thisView
         if thisView.superview == nil {
-            arView.addSubview(thisView)
+            arView?.addSubview(thisView)
         }
     }
     
@@ -134,7 +135,7 @@ public class BodyTracker2D {
     //Run this code every frame to get the joints.
     public func updateBody(event: SceneEvents.Update? = nil) {
         guard
-            let frame = self.arView.session.currentFrame
+            let frame = arView?.session.currentFrame
         else {return}
         updateJointScreenPositions(frame: frame)
         updateTrackedViews(frame: frame)
@@ -159,13 +160,14 @@ public class BodyTracker2D {
         if bodyIsDetected == false {bodyIsDetected = true}
         
         guard
-            let interfaceOrientation = self.arView.window?.windowScene?.interfaceOrientation
+            let arView,
+            let interfaceOrientation = arView.window?.windowScene?.interfaceOrientation
         else { return }
         
         let jointLandmarks = detectedBody.skeleton.jointLandmarks
         
         //Convert the normalized joint points into screen-space CGPoints.
-        let transform = frame.displayTransform(for: interfaceOrientation, viewportSize: self.arView.frame.size)
+        let transform = frame.displayTransform(for: interfaceOrientation, viewportSize: arView.frame.size)
         for i in 0..<jointLandmarks.count {
                 if jointLandmarks[i].x.isNaN || jointLandmarks[i].y.isNaN {
                     continue
@@ -175,7 +177,7 @@ public class BodyTracker2D {
                 //Convert from normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
                 //to screen-space coordinates.
                 let normalizedCenter = point.applying(transform)
-            let center = normalizedCenter.applying(CGAffineTransform.identity.scaledBy(x: self.arView.frame.width, y: self.arView.frame.height))
+            let center = normalizedCenter.applying(CGAffineTransform.identity.scaledBy(x: arView.frame.width, y: arView.frame.height))
             self.jointScreenPositions[i] = center
         }
     }

@@ -57,7 +57,7 @@ public struct Body3DComponent: Component {
 //MARK: - BodyEntity3D
 public class BodyEntity3D: Entity {
     
-    internal weak var arView : ARView!
+    internal weak var arView : ARView?
     
     ///This is used to subscribe to scene update events, so we can run code every frame without an ARSessionDelegate.
     private var updateCancellable : Cancellable!
@@ -78,7 +78,7 @@ public class BodyEntity3D: Entity {
         
         super.init()
         
-        self.arView.scene.addAnchor(bodyAnchor)
+        arView.scene.addAnchor(bodyAnchor)
         
         //An AnchorEntity targeting a body (at the hip joint) is not smoothed automatically, so we just use this instead of giving the BodyEntity3D an AnchoringComponent targeting a body.
         //self acts as the root Entity located at the hip joint, and the scene anchor is always at position 0,0,0 in world space.
@@ -160,8 +160,9 @@ public class BodyEntity3D: Entity {
     
     //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     private func subscribeToUpdates(){
-        self.updateCancellable = self.arView.scene.subscribe(to: SceneEvents.Update.self) { event in
-            if let bodyAnchor = self.arView.session.currentFrame?.anchors.first(where: {$0 is ARBodyAnchor}) as? ARBodyAnchor {
+        guard let arView else {return}
+        self.updateCancellable = arView.scene.subscribe(to: SceneEvents.Update.self) {[weak arView] event in
+            if let bodyAnchor = arView?.session.currentFrame?.anchors.first(where: {$0 is ARBodyAnchor}) as? ARBodyAnchor {
                     self.arBodyAnchor = bodyAnchor
                     //Must access the frame's anchors every frame. Storing the ARBodyAnchor does not give updates.
 
