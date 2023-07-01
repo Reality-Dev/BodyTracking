@@ -65,13 +65,14 @@ public class HandTracker2D {
                          requestRate: FrameRateRegulator.RequestRate = .half) {
         self.arView = arView
         self.confidenceThreshold = confidenceThreshold
-        self.requestRate = requestRate
         SampleBufferDelegate.shared.arView = arView
         self.populateJointPositions()
         
         HandTrackingSystem.registerSystem(arView: arView)
         HandTrackingSystem.trackedObjects.append(.twoD(self))
         SampleBufferDelegate.shared.handTrackers.append(self)
+        
+        SampleBufferDelegate.shared.frameRateRegulator.requestRate = requestRate
     }
     
     internal fileprivate(set) var handHasBeenInitiallyIdentified = false
