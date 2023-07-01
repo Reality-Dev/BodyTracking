@@ -17,7 +17,7 @@ public class FrameRateRegulator {
     ///Running the request every frame may decrease performance.
     ///Can be reduced to increase performance at the cost of choppy tracking.
     ///Set to half to run every other frame. Set to quarter to run every 1 out of 4 frames.
-    public var requestRate: RequestRate = .quarter
+    public var requestRate: RequestRate = .half
     
     private var frameInt = 1
     
@@ -33,7 +33,6 @@ public class FrameRateRegulator {
     }
 }
 
-
 //You can track as many hands as you want, or set the maximumHandCount of sampleBufferDelegate's handPoseRequest.
 @available(iOS 14.0, *)
 public class HandTracker2D {
@@ -44,12 +43,29 @@ public class HandTracker2D {
     
     public typealias HandJointName = VNHumanHandPoseObservation.JointName
     
+    ///The frequency that the Vision request for detecting hands will be performed.
+    ///
+    ///Running the request every frame may decrease performance.
+    ///Can be reduced to increase performance at the cost of choppy tracking.
+    ///Set to half to run every other frame. Set to quarter to run every 1 out of 4 frames.
+    ///Note: If multiple objects using hand tracking are used simultaneously, then the highest requestRate of any of them will be used for all of them.
+    public var requestRate: FrameRateRegulator.RequestRate {
+        get {
+            return SampleBufferDelegate.shared.frameRateRegulator.requestRate
+        }
+        set {
+            SampleBufferDelegate.shared.frameRateRegulator.requestRate = newValue
+        }
+    }
+    
     internal var id = UUID()
 
     public required init(arView: ARView,
-                         confidenceThreshold: Float = 0.4) {
+                         confidenceThreshold: Float = 0.4,
+                         requestRate: FrameRateRegulator.RequestRate = .half) {
         self.arView = arView
         self.confidenceThreshold = confidenceThreshold
+        self.requestRate = requestRate
         SampleBufferDelegate.shared.arView = arView
         self.populateJointPositions()
         
@@ -159,9 +175,9 @@ public class HandTracker2D {
 @available(iOS 14, *)
 class SampleBufferDelegate {
     
-    static var shared = SampleBufferDelegate()
+    public static var shared = SampleBufferDelegate()
     
-    public var frameRateRegulator = FrameRateRegulator()
+    internal var frameRateRegulator = FrameRateRegulator()
     
     internal weak var arView : ARView?
     
@@ -180,14 +196,12 @@ class SampleBufferDelegate {
     
     
     //Run this code every frame to get the joints.
-    func update() {
+    internal func update() {
         guard
             let frame = self.arView?.session.currentFrame
         else {return}
         
-        if frameRateRegulator.canContinue() {
-            self.runFingerDetection(frame: frame)
-        }
+        self.runFingerDetection(frame: frame)
         
         for handTracker in self.handTrackers {
             
@@ -195,7 +209,7 @@ class SampleBufferDelegate {
         }
     }
     
-    func runFingerDetection(frame: ARFrame){
+    internal func runFingerDetection(frame: ARFrame){
         //Run hand detection asynchronously to keep app from lagging.
         DispatchQueue.global().async { [weak self] in
             

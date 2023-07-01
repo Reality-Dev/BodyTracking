@@ -66,6 +66,15 @@ public class BodyEntity3D: Entity {
     
     public private(set) var didInitiallyDetectBody = false
     
+    ///A Boolean value that indicates whether this object's transform accurately represents the trasform of the real-world body for the current frame.
+    ///
+    ///If this value is true, the object’s transform currently matches the position and orientation of the real-world object it represents.
+    ///
+    ///If this value is false, the object is not guaranteed to match the movement of its corresponding real-world feature, even if it remains in the visible scene.
+    public var bodyIsTracked: Bool {
+        return arBodyAnchor?.isTracked ?? false
+    }
+    
     public private(set) var arBodyAnchor: ARBodyAnchor?
     
     //Position 0,0,0 in world space.
