@@ -201,7 +201,9 @@ class SampleBufferDelegate {
             let frame = self.arView?.session.currentFrame
         else {return}
         
-        self.runFingerDetection(frame: frame)
+        if frameRateRegulator.canContinue() {
+            self.runFingerDetection(frame: frame)
+        }
         
         for handTracker in self.handTrackers {
             
