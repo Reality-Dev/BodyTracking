@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
   name: "BodyTracking",
-  platforms: [.macOS(.v10_15), .iOS("13.0")],
+  platforms: [.iOS("13.0")],
   products: [
     .library(name: "BodyTracking", targets: ["BodyTracking"])
   ],
