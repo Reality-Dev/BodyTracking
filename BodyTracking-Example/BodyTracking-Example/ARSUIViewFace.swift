@@ -17,18 +17,20 @@ class ARSUIViewFace: BodyARView {
     private var lEye: ModelEntity!
     private var lEyeRay: Entity!
     
-    private var mouth: ModelEntity?
-    
-    
     required init(frame frameRect: CGRect) {
         super.init(frame: frameRect)
-        self.faceEntity = FaceEntity(arView: self)
+        
+        self.faceEntity = FaceEntity(session: session)
+        
+        // FaceEntity has an AnchoringComponent that targets the face.
+        scene.addAnchor(faceEntity)
+        
         self.session.delegate = self
+        
         guard let _ = try? runFaceTrackingConfig() else { return }
+        
         makeFace()
     }
-
-    
 
     override func stopSession(){
             super.stopSession()
@@ -40,7 +42,6 @@ class ARSUIViewFace: BodyARView {
     deinit {
         self.stopSession()
     }
-    
     
     private func makeFace(){
         
@@ -59,11 +60,8 @@ class ARSUIViewFace: BodyARView {
         lEyeRay.transform.rotation = simd_quatf.init(angle: .pi / 2, axis: [1,0,0])
         lEyeRay.position = [0,0,0.02]
         //--//
-        faceEntity.addChild(rEye)
-        faceEntity.addChild(lEye)
-        rEye.position = [0.1, 0.1, 0.05]
-        lEye.position = [-0.1, 0.1, 0.05]
-        
+        faceEntity.rightEye.addChild(rEye)
+        faceEntity.leftEye.addChild(lEye)
     }
 
     private func makeRay()-> Entity{
@@ -83,28 +81,22 @@ class ARSUIViewFace: BodyARView {
         return eyeBall
     }
     
-    
     //required function.
     @objc required dynamic init?(coder decoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
 }
 
 extension ARSUIViewFace: ARSessionDelegate {
     
     //For RealityKit 2 we should use a RealityKit System instead of this update function but that would be limited to devices running iOS 15.0+
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        rEye.transform.matrix = faceEntity.face.rEyeTransform ?? .init()
-        lEye.transform.matrix = faceEntity.face.lEyeTransform ?? .init()
+
+        // Left and right eye transforms are set within the FaceSystem, so you do not have to apply those values from the ARFaceAnchor youself.
         
         //The more wide you open your eyes, the longer rays are that shoot out from your eyes.
-        rEyeRay.scale.y = faceEntity.blendShapes[.eyeWideRight] ?? 1
-        lEyeRay.scale.y = faceEntity.blendShapes[.eyeWideLeft] ?? 1
-        
-//        if let mouth = mouth {
-//            mouth.scale.x = 1 - (faceEntity.blendShapes[.mouthClose] ?? 1)
-//            mouth.scale.y = faceEntity.blendShapes[.jawOpen] ?? 1
-//        }
+        rEyeRay.scale.y = faceEntity.face.blendShapes[.eyeWideRight] ?? 1
+
+        lEyeRay.scale.y = faceEntity.face.blendShapes[.eyeWideLeft] ?? 1
     }
 }
