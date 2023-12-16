@@ -20,12 +20,18 @@ class ARSUIView3D: BodyARView {
                                        smoothingAmount: 0.7)
         
         do { try runBodyTrackingConfig3D() }
-        catch BodyTrackingError.runtimeError(let errorMessage) {print(errorMessage); return}
+        catch BodyTrackingError.runtimeError(let errorMessage) {
+            assertionFailure(errorMessage)
+            return
+        }
         catch {}
         
-        //Another way you can call runBodyTrackingConfig3D:
-        //guard let _ = try? runBodyTrackingConfig3D() else { return }
-
+        /*
+         Other ways you can call runBodyTrackingConfig3D:
+          try! runBodyTrackingConfig3D()
+          OR
+          guard let _ = try? runBodyTrackingConfig3D() else { return }
+         */
         
         makeTrackedJointsVisible()
     }
