@@ -16,19 +16,20 @@ final class FaceSystem: System {
     
     private static var faceQuery = EntityQuery(where: .has(FaceComponent.self))
     
+    // Must access the frame's anchors every frame. Storing the ARFaceAnchor does not give updates.
     func update(context: SceneUpdateContext) {
         guard
             let arSession = Self.arSession,
-            let faceAnchor = arSession.currentFrame?.anchors.compactMap({$0 as? ARFaceAnchor}).first
+            let arFaceAnchor = arSession.currentFrame?.anchors.compactMap({$0 as? ARFaceAnchor}).first
         else {return}
         
-        context.scene.performQuery(Self.faceQuery).compactMap({$0 as? FaceEntity}).forEach { faceEntity in
+        context.scene.performQuery(Self.faceQuery).compactMap({$0 as? FaceAnchor}).forEach { faceAnchor in
             
-            faceEntity.face.arFaceAnchor = faceAnchor
+            faceAnchor.face.arFaceAnchor = arFaceAnchor
             
-            faceEntity.leftEye.transform.matrix = faceAnchor.leftEyeTransform
+            faceAnchor.leftEye.transform.matrix = arFaceAnchor.leftEyeTransform
             
-            faceEntity.rightEye.transform.matrix = faceAnchor.rightEyeTransform
+            faceAnchor.rightEye.transform.matrix = arFaceAnchor.rightEyeTransform
         }
     }
 }

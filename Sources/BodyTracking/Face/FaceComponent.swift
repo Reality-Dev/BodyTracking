@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Grant Jarvis on 12/16/23.
 //
@@ -12,26 +12,24 @@ import RealityKit
 /// Will transform blendshape values from `NSNumber` to `Float` for use in RealityKit.
 public struct BlendShapeContainer {
     
-    var sourceDictionary:  [ARFaceAnchor.BlendShapeLocation : NSNumber]
+    weak var sourceAnchor: ARFaceAnchor?
     
     public subscript(key: ARFaceAnchor.BlendShapeLocation) -> Float? {
-        return sourceDictionary[key] as? Float
+        return sourceAnchor?.blendShapes[key] as? Float
     }
 }
 
 public struct FaceComponent: Component {
     
-    static var isRegistered = false
+    private static var isRegistered = false
     
     ///Identifiers for specific facial features with coefficients describing the relative movements of those features.
     ///
     ///See: `ARFaceAnchor.BlendShapeLocation` for more explanation.
     ///- Note: A geometry morpher can be used with blendshapes for Memoji type effects, but these values can be used for other purposes as well.
-
     public var blendShapes: BlendShapeContainer {
-        guard let arFaceAnchor else { return .init(sourceDictionary: [:]) }
         
-        return BlendShapeContainer(sourceDictionary: arFaceAnchor.blendShapes)
+        return BlendShapeContainer(sourceAnchor: arFaceAnchor)
     }
     
     public var rEyeTransform: simd_float4x4? {
