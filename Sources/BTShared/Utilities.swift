@@ -5,35 +5,36 @@
 //  Created by Grant Jarvis on 11/13/21.
 //
 
-import simd
-import UIKit
 import RealityKit
 import RKUtilities
+import simd
+import UIKit
 
-//MARK: - Alerts
+// MARK: - Alerts
+
 public extension UIView {
-    func showAlert(title: String, message: String){
-
+    func showAlert(title: String, message: String) {
         guard
             let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let mainWindow = windowScene.windows.first else {return}
+            let mainWindow = windowScene.windows.first else { return }
 
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Dismiss", style: .default, handler: nil))
-        //arView.window is nil the way we have set up this example project.
+        // arView.window is nil the way we have set up this example project.
         mainWindow.rootViewController?.present(alert, animated: true, completion: nil)
     }
 }
 
-//MARK: - Coordinate Space Conversion
+// MARK: - Coordinate Space Conversion
+
 public extension ARView {
-    
     func convertAVFoundationToScreenSpace(_ point: CGPoint) -> CGPoint {
-        //Convert from normalized AVFoundation coordinates (0,0 top-left, 1,1 bottom-right)
-        //to screen-space coordinates.
+        // Convert from normalized AVFoundation coordinates (0,0 top-left, 1,1 bottom-right)
+        // to screen-space coordinates.
         if
             let arFrame = session.currentFrame,
-            let interfaceOrientation = window?.windowScene?.interfaceOrientation{
+            let interfaceOrientation = window?.windowScene?.interfaceOrientation
+        {
             let transform = arFrame.displayTransform(for: interfaceOrientation, viewportSize: frame.size)
             let normalizedCenter = point.applying(transform)
             let center = normalizedCenter.applying(CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height))
@@ -42,30 +43,31 @@ public extension ARView {
             return CGPoint()
         }
     }
-    
+
     func convertScreenSpaceToAVFoundation(_ point: CGPoint) -> CGPoint? {
-        //Convert to normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
-        //from screen-space coordinates.
+        // Convert to normalized pixel coordinates (0,0 top-left, 1,1 bottom-right)
+        // from screen-space coordinates.
         guard
-          let arFrame = session.currentFrame,
-          let interfaceOrientation = window?.windowScene?.interfaceOrientation
-        else {return nil}
-           
-          let inverseScaleTransform = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height).inverted()
-          let invertedDisplayTransform = arFrame.displayTransform(for: interfaceOrientation, viewportSize: frame.size).inverted()
-          let unScaledPoint = point.applying(inverseScaleTransform)
-          let normalizedCenter = unScaledPoint.applying(invertedDisplayTransform)
-          return normalizedCenter
+            let arFrame = session.currentFrame,
+            let interfaceOrientation = window?.windowScene?.interfaceOrientation
+        else { return nil }
+
+        let inverseScaleTransform = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height).inverted()
+        let invertedDisplayTransform = arFrame.displayTransform(for: interfaceOrientation, viewportSize: frame.size).inverted()
+        let unScaledPoint = point.applying(inverseScaleTransform)
+        let normalizedCenter = unScaledPoint.applying(invertedDisplayTransform)
+        return normalizedCenter
     }
 }
 
-//MARK: - Interpolation
+// MARK: - Interpolation
+
 public func lerp(from: simd_float3, to: simd_float3, t: Float) -> simd_float3 {
     return from + ((to - from) * t)
 }
 
+// MARK: - WeakCollection
 
-//MARK: - WeakCollection
 //  Created by Vladislav Grigoryev on 27.05.2020.
 //  Copyright © 2020 GORA Studio. https://gora.studio
 //
@@ -91,50 +93,48 @@ import Foundation
 
 @propertyWrapper
 public struct WeakCollection<Value: AnyObject> {
-
     private var _wrappedValue: [Weak<Value>]
 
     public var wrappedValue: [Value] {
-    get { _wrappedValue.lazy.compactMap { $0.get() } }
-    set { _wrappedValue = newValue.map(Weak.init) }
+        get { _wrappedValue.lazy.compactMap { $0.get() } }
+        set { _wrappedValue = newValue.map(Weak.init) }
     }
 
-    public init(wrappedValue: [Value]) { self._wrappedValue = wrappedValue.map(Weak.init) }
+    public init(wrappedValue: [Value]) { _wrappedValue = wrappedValue.map(Weak.init) }
 
     public mutating func compact() { _wrappedValue = { _wrappedValue }() }
 }
 
 @propertyWrapper
-final public class Weak<Object: AnyObject> {
-
+public final class Weak<Object: AnyObject> {
     private weak var _wrappedValue: AnyObject?
 
     public var wrappedValue: Object? {
         get { _wrappedValue as? Object }
         set { _wrappedValue = newValue }
     }
-    
-    public init(_ object: Object) { self._wrappedValue = object }
-    
-    public init(wrappedValue: Object?) { self._wrappedValue = wrappedValue }
+
+    public init(_ object: Object) { _wrappedValue = object }
+
+    public init(wrappedValue: Object?) { _wrappedValue = wrappedValue }
 
     public func get() -> Object? { wrappedValue }
 }
 
+// MARK: - CGPoint
 
-//MARK: - CGPoint
 public extension CGPoint {
-    
-    static func *(lhs: CGPoint, rhs: CGFloat) -> CGPoint{
+    static func * (lhs: CGPoint, rhs: CGFloat) -> CGPoint {
         return CGPoint(x: lhs.x * rhs,
                        y: lhs.y * rhs)
     }
-    static func /(lhs: CGPoint, rhs: CGFloat) -> CGPoint{
+
+    static func / (lhs: CGPoint, rhs: CGFloat) -> CGPoint {
         return CGPoint(x: lhs.x / rhs,
                        y: lhs.y / rhs)
     }
-    
+
     func convertVisionToAVFoundation() -> CGPoint {
-        return CGPoint(x: self.x, y: 1 - self.y)
+        return CGPoint(x: x, y: 1 - y)
     }
 }
