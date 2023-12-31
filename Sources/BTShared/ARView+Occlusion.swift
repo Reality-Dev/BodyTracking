@@ -5,13 +5,12 @@
 //  Created by Grant Jarvis on 5/2/21.
 //
 
-import RealityKit
 import ARKit
+import RealityKit
 
-//This enables or disables person segmentation occlusion.
-//Person segmentation is different from the 3D occlusion shapes inside of ARSUIView3D.
+// This enables or disables person segmentation occlusion.
+// Person segmentation is different from the 3D occlusion shapes inside of ARSUIView3D.
 public extension ARView {
-    
     /// Use this function to enable person segmentation occlusion
     /// - Parameter withDepth: If withDepth is false, then a person always shows up in front of virtual content, no matter how far away the person or the content is. If withDepth is true, then the person shows up in front only where it is judged to be *closer* to the camera than the virtual content.
     func enableOcclusion(withDepth: Bool = true) throws {
@@ -21,7 +20,7 @@ public extension ARView {
             print(errorMessage)
             throw BodyTrackingError.runtimeError(errorMessage)
         }
-        if let configuration = self.session.configuration {
+        if let configuration = session.configuration {
             config = configuration
         } else {
             config = ARWorldTrackingConfiguration()
@@ -31,26 +30,22 @@ public extension ARView {
         } else {
             config.frameSemantics.insert(.personSegmentation)
         }
-        self.session.run(config)
+        session.run(config)
     }
-    
+
     /// Use this function to disable person segmentation occlusion
     func disableOcclusion() {
         var config: ARConfiguration
-        if let configuration = self.session.configuration {
+        if let configuration = session.configuration {
             config = configuration
         } else {
             config = ARWorldTrackingConfiguration()
         }
         config.frameSemantics.remove([.personSegmentationWithDepth, .personSegmentation])
-        self.session.run(config)
+        session.run(config)
     }
-    
+
     enum BodyTrackingError: Error {
         case runtimeError(String)
     }
 }
-
-
-
-

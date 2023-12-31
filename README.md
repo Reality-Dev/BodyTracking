@@ -2,6 +2,8 @@
 
 This package includes classes that enable easy, convenient body tracking in RealityKit.
 
+For expert guidance and examples, check out this course: //$$
+
 <p align="center">
   <img src="https://img.shields.io/github/v/release/Reality-Dev/BodyTracking?color=orange&display_name=tag&label=SwiftPM&logo=swift&style=plastic"/>
   <img src="https://img.shields.io/static/v1?label=platform&message=iOS&color=lightgrey&style=plastic"/>
@@ -38,9 +40,7 @@ Add the URL of this repository to your Xcode 11+ Project under:
 
 ## Usage
 
-Add `import BodyTracking` to the top of your swift file to start.
-
-See the [example project](https://github.com/Reality-Dev/BodyTracking/tree/master/BodyTracking-Example) for guidance.
+Add `import BodyTracking` or `import FaceTracking` or `import HandTracking` to the top of your swift file to start.
 
 
 While using `BodyEntity3D` you can access the joint transforms relative to the root/hip joint each frame by using         `jointModelTransform(for:)`.
