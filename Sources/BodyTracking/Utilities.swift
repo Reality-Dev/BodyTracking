@@ -12,12 +12,16 @@ import RKUtilities
 
 //MARK: - UIView extension
 public extension UIView {
-    func showAlert(title: String, message: String){
-        guard UIApplication.shared.windows.count == 1 else { return}
+    func showAlert(title: String, message: String) {
+
+        guard
+            let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let mainWindow = windowScene.windows.first else {return}
+
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Dismiss", style: .default, handler: nil))
         //arView.window is nil the way we have set up this example project.
-        UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true, completion: nil)
+        mainWindow.rootViewController?.present(alert, animated: true, completion: nil)
     }
 }
 
