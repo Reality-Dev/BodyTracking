@@ -2,50 +2,16 @@
 import RealityKit
 import ARKit
 
-//MARK: - Body3DComponent
-public struct Body3DComponent: Component {
-    
-    private static var isRegistered = false
-    
-    internal var trackedJoints = Set<TrackedBodyJoint>()
-    
-    ///An amount, from 0 to 1, that the joint movements are smoothed by.
-    public var smoothingAmount: Float = 0
-    
-    internal var rootIsSmoothed: Bool
-    
-    internal var needsSmoothing: Bool
-    
-    ///This is used for smoothing. The BodyEntity3D is attached to an anchor entity which overrides the transforms we set.
-    internal var lastRootTransform = simd_float4x4(diagonal: [1, 1, 1, 1])
-    
-    public init(smoothingAmount: Float,
-                rootIsSmoothed: Bool,
-                trackedJoints: Set<TrackedBodyJoint> = []){
-        self.smoothingAmount = smoothingAmount
-        self.needsSmoothing = smoothingAmount > 0
-        self.rootIsSmoothed = rootIsSmoothed
-        self.trackedJoints = trackedJoints
-        register()
-    }
-    
-    private func register(){
-        if !Self.isRegistered {
-            Self.registerComponent()
-            BodyTrackingSystem.registerSystem()
-            Self.isRegistered = true
-        }
-    }
-}
 
 //MARK: - BodyEntity3D
-public class BodyEntity3D: Entity {
+public class BodyEntity3D: Entity, HasBody3D {
     
-    public var body3D: Body3DComponent {
+    public internal(set) var body3D: Body3DComponent {
         get {
             component(forType: Body3DComponent.self) ?? .init(smoothingAmount: 0, rootIsSmoothed: false)
         }
         set {
+            // Do not use this: `components[Body3DComponent.self] = newValue` in case newValue is nil, because `body3D` should never be nil on `BodyEntity3D`.
             components.set(newValue)
         }
     }
@@ -75,6 +41,14 @@ public class BodyEntity3D: Entity {
       }
         self.body3D.trackedJoints = []
       self.removeFromParent()
+    }
+    
+    public func setSmoothingAmount(_ newValue: Float) {
+        body3D.smoothingAmount = newValue.clamped(0, 0.9999)
+    }
+    
+    public func setRootIsSmoothed(_ newValue: Bool) {
+        body3D.rootIsSmoothed = newValue
     }
     
     /// Use this function to attach an entity to a particular joint.

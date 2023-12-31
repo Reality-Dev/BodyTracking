@@ -8,10 +8,11 @@
 import ARKit
 import RealityKit
 import RKUtilities
+import BTShared
 
-// MARK: - BodyTrackingSystem
+// MARK: - BodyTracking3DSystem
 
-final class BodyTrackingSystem: System {
+final class BodyTracking3DSystem: System {
     
     static weak var arSession: ARSession?
     
@@ -31,13 +32,17 @@ final class BodyTrackingSystem: System {
             
             bodyAnchor.bodyAnchorComponent.arBodyAnchor = arBodyAnchor
             
+            if bodyAnchor.bodyAnchorComponent.bodyIsTracked.value != arBodyAnchor.isTracked {
+                bodyAnchor.bodyAnchorComponent.bodyIsTracked.value = arBodyAnchor.isTracked
+            }
+            
             let didInitiallyDetectBody = bodyAnchor.bodyAnchorComponent.didInitiallyDetectBody
             
             if !didInitiallyDetectBody, arBodyAnchor.isTracked {
                 bodyAnchor.bodyAnchorComponent.didInitiallyDetectBody = true
             }
             
-            for bodyEntity in bodyAnchor.body3DEntities.compactMap({$0.get()}) {
+            for bodyEntity in bodyAnchor.body3DEntities {
                 
                 if bodyEntity.body3D.rootIsSmoothed {
                     smoothRootMotion(didInitiallyDetectBody: didInitiallyDetectBody,

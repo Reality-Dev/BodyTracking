@@ -7,49 +7,27 @@
 
 import ARKit
 import RealityKit
+import BTShared
 
-public struct BodyAnchorComponent: Component {
-    public internal(set) var didInitiallyDetectBody = false
+public class BodyAnchor: Entity, HasBodyAnchoring {
     
-    public internal(set) weak var arBodyAnchor: ARBodyAnchor?
+    @WeakCollection internal var body3DEntities = [BodyEntity3D]()
     
-    ///A Boolean value that indicates whether this object's transform accurately represents the trasform of the real-world body for the current frame.
-    ///
-    ///If this value is true, the object’s transform currently matches the position and orientation of the real-world object it represents.
-    ///
-    ///If this value is false, the object is not guaranteed to match the movement of its corresponding real-world feature, even if it remains in the visible scene.
-    public var bodyIsTracked: Bool {
-        arBodyAnchor?.isTracked ?? false
-    }
-    
-    public func jointModelTransform(for joint: ThreeDBodyJoint) -> simd_float4x4? {
-        arBodyAnchor?.skeleton.jointModelTransforms[joint.rawValue]
-    }
-    
-    public func jointLocalTransform(for joint: ThreeDBodyJoint) -> simd_float4x4? {
-        arBodyAnchor?.skeleton.jointLocalTransforms[joint.rawValue]
-    }
-}
-
-public class BodyAnchor: Entity, HasAnchoring {
-    public private(set) var arBodyAnchor: ARBodyAnchor?
-    
-    internal var body3DEntities = [Weak<BodyEntity3D>]()
-    
-    public var bodyAnchorComponent: BodyAnchorComponent {
+    public internal(set) var bodyAnchorComponent: BodyAnchorComponent {
         get {
             component(forType: BodyAnchorComponent.self) ?? .init()
         }
         set {
+            // Do not use this: `components[BodyAnchorComponent.self] = newValue` in case newValue is nil, because `bodyAnchorComponent` should never be nil on `BodyAnchor`.
             components.set(newValue)
         }
     }
     
     /// Initializes a BodyAnchor
-    /// - Parameter session: The ARSession that the `BodyTrackingSystem` will use to extract tracking data.
+    /// - Parameter session: The ARSession that the `BodyTracking3DSystem` will use to extract tracking data.
     public init(session: ARSession) {
         
-        BodyTrackingSystem.arSession = session
+        BodyTracking3DSystem.arSession = session
         
         super.init()
         
@@ -65,15 +43,16 @@ public class BodyAnchor: Entity, HasAnchoring {
     
     /// Attaches a `BodyEntity3D` to this `BodyAnchor` so that the `BodyEntity3D`'s joint transforms will be updated based on the tracking data associated with this `BodyAnchor`.
     /// - Parameters:
-    ///   - bodyEntity: The entity that will be added for morphing.
+    ///   - bodyEntity: The entity that will be added for tracking.
     ///   - automaticallyAddChild: Set to true to add this entity as a child to the `BodyAnchor`. If set to false, you can still add the `BodyEntity3D` to the scene in some other way (such as to another anchor or anchor's descendant), and its joint transforms will be updated based on the tracking data associated with this `BodyAnchor`.
     public func attach(bodyEntity: BodyEntity3D,
                        automaticallyAddChild: Bool = true) {
-        guard self.body3DEntities.contains(where: {$0.wrappedValue == bodyEntity}) == false else {
+        guard self.body3DEntities.contains(where: {$0 == bodyEntity}) == false else {
             print("Already added BodyEntity3D \(bodyEntity.name) to this BodyAnchor")
             return
         }
-        self.body3DEntities.append(Weak(bodyEntity))
+        
+        self.body3DEntities.append(bodyEntity)
         
         if automaticallyAddChild { addChild(bodyEntity) }
     }

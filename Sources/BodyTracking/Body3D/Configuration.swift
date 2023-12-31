@@ -10,6 +10,19 @@ import RealityKit
 
 //MARK: - Configuration
 public extension ARView {
+    
+    func runBodyTrackingConfig2D() throws {
+        //This is more efficient if you are just using 2D and Not 3D tracking.
+        guard ARWorldTrackingConfiguration.supportsFrameSemantics(.bodyDetection) else {
+            let errorMessage = "This device does Not support body detection."
+            print(errorMessage)
+            throw BodyTrackingError.runtimeError(errorMessage)
+        }
+        let config2D = ARWorldTrackingConfiguration()
+        config2D.frameSemantics = .bodyDetection
+        self.session.run(config2D)
+    }
+    
     ///If ARBodyTrackingConfiguration is supported on this device, run this type of configuration on this ARView's session.
     ///
     ///If ARBodyTrackingConfiguration is not supported on this device, this function will print an error message, throw an error, and present an alert to the user.

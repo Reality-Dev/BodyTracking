@@ -40,7 +40,7 @@ Add the URL of this repository to your Xcode 11+ Project under:
 
 ## Usage
 
-Add `import BodyTracking` or `import FaceTracking` to the top of your swift file to start.
+Add `import BodyTracking` or `import FaceTracking` or `import HandTracking` to the top of your swift file to start.
 
 
 While using `BodyEntity3D` you can access the joint transforms relative to the root/hip joint each frame by using         `jointModelTransform(for:)`.
