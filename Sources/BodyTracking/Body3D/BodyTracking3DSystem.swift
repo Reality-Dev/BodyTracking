@@ -40,14 +40,8 @@ final class BodyTracking3DSystem: System {
                 bodyAnchor.bodyAnchorComponent.didInitiallyDetectBody = true
             }
 
-            for bodyEntity in bodyAnchor.body3DEntities {
-                if bodyEntity.body3D.rootIsSmoothed {
-                    smoothRootMotion(didInitiallyDetectBody: didInitiallyDetectBody,
-                                     bodyEntity: bodyEntity,
-                                     newTransform: arBodyAnchor.transform)
-                }
-
-                updateJoints(of: bodyEntity, with: arBodyAnchor)
+            bodyAnchor.body3DEntities.forEach {
+                updateJoints(of: $0, with: arBodyAnchor)
             }
         }
     }
@@ -55,6 +49,10 @@ final class BodyTracking3DSystem: System {
     private func updateJoints(of bodyEntity: BodyEntity3D,
                               with arBodyAnchor: ARBodyAnchor)
     {
+        /*
+         For efficiency: Entities are parented to the root, not parented to local parent joint. Not using local transform.
+         i.e. If only a subset of joints have entities added to them, then we do not need to add internal entities to every joint.
+         */
         for trackedJoint in bodyEntity.body3D.trackedJoints {
             let jointIndex = trackedJoint.jointName.rawValue
             let newTransform = arBodyAnchor.skeleton.jointModelTransforms[jointIndex]
@@ -72,27 +70,6 @@ final class BodyTracking3DSystem: System {
     // MARK: - Smoothing
 
     // TODO: Use SmoothDamp instead of Lerp.
-    private func smoothRootMotion(didInitiallyDetectBody: Bool,
-                                  bodyEntity: BodyEntity3D,
-                                  newTransform: simd_float4x4)
-    {
-        // Prevent the object from flying onto the body from 0,0,0 in world space initially.
-        guard didInitiallyDetectBody else {
-            bodyEntity.setTransformMatrix(newTransform, relativeTo: nil)
-            bodyEntity.body3D.lastRootTransform = newTransform
-            return
-        }
-
-        let t = (1 - bodyEntity.body3D.smoothingAmount)
-
-        let lastTransform = bodyEntity.body3D.lastRootTransform
-
-        let newTransform = simd_float4x4.mixOrientationTranslation(lastTransform, newTransform, t: t)
-
-        bodyEntity.setTransformMatrix(newTransform, relativeTo: nil)
-
-        bodyEntity.body3D.lastRootTransform = newTransform
-    }
 
     private func smoothJointMotion(_ joint: TrackedBodyJoint,
                                    bodyEntity: BodyEntity3D,
@@ -112,8 +89,8 @@ final class BodyTracking3DSystem: System {
 
 extension simd_float4x4 {
     static func mixOrientationTranslation(_ x: simd_float4x4, _ y: simd_float4x4, t: Float) -> simd_float4x4 {
-        let newTranslation = lerp(from: x.translation,
-                                  to: y.translation,
+        let newTranslation = simd.mix(x.translation,
+                                  y.translation,
                                   t: t)
 
         var mixedMatrix = simd_float4x4(translation: newTranslation)

@@ -14,7 +14,7 @@ public protocol HasHand3D {
 }
 
 public struct Hand3DComponent: Component {
-    public internal(set) var trackedEntities = [HandTracker2D.HandJointName: Entity]()
+    public internal(set) var trackedEntities = [HandJoint.JointName: Entity]()
 
     init() {
         Registerer.register(Self.self)

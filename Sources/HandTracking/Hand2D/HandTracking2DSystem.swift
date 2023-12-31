@@ -78,6 +78,9 @@ internal class Hand2DSystem: System {
         var aboveConfidenceThreshold = false
 
         for point in fingerPoints {
+            
+            // TODO: expose confidence values publicly.
+            // TODO: better handle individual joints becoming undetected.
             guard point.value.confidence > tracker.hand2D.confidenceThreshold else { continue }
 
             aboveConfidenceThreshold = true

@@ -32,11 +32,13 @@ public class HandTracker3D: Entity, HasHand3D {
 
         hand3D = .init()
     }
+    
+    // TODO: Use ML model for 3D hand tracking.
 
     /// Allows only one view per joint.
     /// - This will add `thisView` to ARView automatically.
     /// - If you would like to attach more than one view per joint, then try attaching additional views to the view that is already attached to this joint.
-    public func attach(thisEnt: Entity, toThisJoint thisJoint: HandTracker2D.HandJointName, preservingWorldTransform: Bool = false) {
+    public func attach(thisEnt: Entity, toThisJoint thisJoint: HandJoint.JointName, preservingWorldTransform: Bool = false) {
         let jointEnt: Entity
 
         if let existingEnt = hand3D.trackedEntities[thisJoint] {
@@ -53,7 +55,7 @@ public class HandTracker3D: Entity, HasHand3D {
         if !preservingWorldTransform { thisEnt.transform = .init() }
     }
 
-    public func removeEnt(_ joint: HandTracker2D.HandJointName) {
+    public func removeEnt(_ joint: HandJoint.JointName) {
         hand3D.trackedEntities[joint]?.removeFromParent()
         hand3D.trackedEntities.removeValue(forKey: joint)
     }

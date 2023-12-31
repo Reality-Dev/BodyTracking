@@ -7,7 +7,7 @@ import RealityKit
 public class BodyEntity3D: Entity, HasBody3D {
     public internal(set) var body3D: Body3DComponent {
         get {
-            component(forType: Body3DComponent.self) ?? .init(smoothingAmount: 0, rootIsSmoothed: false)
+            component(forType: Body3DComponent.self) ?? .init(smoothingAmount: 0)
         }
         set {
             // Do not use this: `components[Body3DComponent.self] = newValue` in case newValue is nil, because `body3D` should never be nil on `BodyEntity3D`.
@@ -17,15 +17,12 @@ public class BodyEntity3D: Entity, HasBody3D {
 
     /// Initializes a BodyEntity3D
     /// - Parameters:
-    ///   - rootIsSmoothed: If set to `true`, the root joint will interpolate towards the transform of the anchor. Set to `false` (the default) to have the root joint immediately follow the anchor's transform.
     ///   - smoothingAmount: The amount, from 0 to 1, that the body is smoothed. Values may need to approach 1.0 to appear to have much effect.
-    public required init(rootIsSmoothed: Bool = false,
-                         smoothingAmount: Float = 0)
+    public required init(smoothingAmount: Float = 0)
     {
         super.init()
 
-        body3D = Body3DComponent(smoothingAmount: smoothingAmount.clamped(0, 0.9999),
-                                 rootIsSmoothed: rootIsSmoothed)
+        body3D = Body3DComponent(smoothingAmount: smoothingAmount.clamped(0, 0.9999))
     }
 
     required init() {
@@ -44,10 +41,6 @@ public class BodyEntity3D: Entity, HasBody3D {
 
     public func setSmoothingAmount(_ newValue: Float) {
         body3D.smoothingAmount = newValue.clamped(0, 0.9999)
-    }
-
-    public func setRootIsSmoothed(_ newValue: Bool) {
-        body3D.rootIsSmoothed = newValue
     }
 
     /// Use this function to attach an entity to a particular joint.
@@ -69,6 +62,11 @@ public class BodyEntity3D: Entity, HasBody3D {
         } else { // body3DComponent.trackedJoints does Not contain this joint yet.
             let jointLocal = TrackedBodyJoint(jointName: jointName)
 
+            /*
+             For efficiency: Entities are parented to the root, not parented to local parent joint. Not using local transform.
+             i.e. If only a subset of joints have entities added to them, then we do not need to add internal entities to every joint.
+             */
+            
             addChild(jointLocal)
 
             if let jointModelTransforms = ARSkeletonDefinition.defaultBody3D.neutralBodySkeleton3D?.jointModelTransforms {

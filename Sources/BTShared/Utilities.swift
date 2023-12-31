@@ -60,10 +60,12 @@ public extension ARView {
     }
 }
 
-// MARK: - Interpolation
+// MARK: - SafeGuarding
 
-public func lerp(from: simd_float3, to: simd_float3, t: Float) -> simd_float3 {
-    return from + ((to - from) * t)
+internal extension Collection {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
 }
 
 // MARK: - WeakCollection
@@ -119,22 +121,4 @@ public final class Weak<Object: AnyObject> {
     public init(wrappedValue: Object?) { _wrappedValue = wrappedValue }
 
     public func get() -> Object? { wrappedValue }
-}
-
-// MARK: - CGPoint
-
-public extension CGPoint {
-    static func * (lhs: CGPoint, rhs: CGFloat) -> CGPoint {
-        return CGPoint(x: lhs.x * rhs,
-                       y: lhs.y * rhs)
-    }
-
-    static func / (lhs: CGPoint, rhs: CGFloat) -> CGPoint {
-        return CGPoint(x: lhs.x / rhs,
-                       y: lhs.y / rhs)
-    }
-
-    func convertVisionToAVFoundation() -> CGPoint {
-        return CGPoint(x: x, y: 1 - y)
-    }
 }

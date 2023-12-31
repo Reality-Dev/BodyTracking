@@ -7,7 +7,7 @@ import UIKit
 
 // You can track as many hands as you want, or set the maximumHandCount of HandDetector's handPoseRequest.
 public class HandTracker2D: HasHand2D, Identifiable {
-    public typealias HandJointName = Hand2DComponent.HandJointName
+    public typealias HandJointName = HandJoint.JointName
 
     public var hand2D: Hand2DComponent
 
@@ -27,16 +27,6 @@ public class HandTracker2D: HasHand2D, Identifiable {
             HandDetector.shared.frameRateRegulator.requestRate = newValue
         }
     }
-
-    // 21 total.
-    public static let allHandJoints: Set<HandJointName> = [
-        .thumbTip, .thumbIP, .thumbMP, .thumbCMC,
-        .indexTip, .indexDIP, .indexPIP, .indexMCP,
-        .middleTip, .middleDIP, .middlePIP, .middleMCP,
-        .ringTip, .ringDIP, .ringPIP, .ringMCP,
-        .littleTip, .littleDIP, .littlePIP, .littleMCP,
-        .wrist,
-    ]
 
     public required init(arView: ARView,
                          confidenceThreshold: Float = 0.4)
@@ -73,7 +63,7 @@ public class HandTracker2D: HasHand2D, Identifiable {
 
         hand2D.jointAVFoundationPositions = [:]
 
-        for joint in HandTracker2D.allHandJoints {
+        for joint in HandJoint.allHandJoints {
             hand2D.jointScreenPositions[joint] = CGPoint()
             hand2D.jointAVFoundationPositions[joint] = CGPoint()
         }

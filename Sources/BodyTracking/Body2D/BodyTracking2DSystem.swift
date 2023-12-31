@@ -77,6 +77,7 @@ internal class BodyTracking2DSystem {
             let interfaceOrientation = arView.window?.windowScene?.interfaceOrientation
         else { return }
 
+        // TODO: better handle individual joints becoming undetected.
         let jointLandmarks = detectedBody.skeleton.jointLandmarks
 
         // Convert the normalized joint points into screen-space CGPoints.

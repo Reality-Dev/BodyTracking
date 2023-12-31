@@ -50,6 +50,8 @@ class HandDetector {
 
         let handler = VNImageRequestHandler(cvPixelBuffer: frame.capturedImage, orientation: .up, options: [:])
 
+        inFlight = true
+        
         do {
             // Perform VNDetectHumanHandPoseRequest
             try handler.perform([handPoseRequest])

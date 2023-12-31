@@ -21,9 +21,9 @@ public struct HandAnchorComponent: Component {
 
     public var depthBufferSelection: DepthBufferSelection = .smoothedSceneDepth
 
-    public internal(set) var depthValues = [HandTracker2D.HandJointName: Float]()
+    public internal(set) var depthValues = [HandJoint.JointName: Float]()
 
-    public internal(set) var jointTransforms = [Hand2DComponent.HandJointName: simd_float4x4]()
+    public internal(set) var jointModelTransforms = [HandJoint.JointName: simd_float4x4]()
 
     init(depthBufferSelection: DepthBufferSelection) {
         self.depthBufferSelection = depthBufferSelection
@@ -36,8 +36,8 @@ public struct HandAnchorComponent: Component {
 
     private mutating func populateJointTransforms() {
         let identity = simd_float4x4.init(diagonal: .one)
-        for joint in HandTracker2D.allHandJoints {
-            jointTransforms[joint] = identity
+        for joint in HandJoint.allHandJoints {
+            jointModelTransforms[joint] = identity
         }
     }
 }

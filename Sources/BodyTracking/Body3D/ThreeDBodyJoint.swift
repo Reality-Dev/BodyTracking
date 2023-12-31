@@ -31,8 +31,6 @@ public class TrackedBodyJoint: Entity {
 /// Includes 91 joints total, 28 tracked.
 /// - Use ThreeDBodyJoint.allCases to access an array of all joints
 public enum ThreeDBodyJoint: Int, CaseIterable {
-    // Not-indented joints are tracked (their transforms follow the person's body).
-    // Indented joints are untracked (they always maintain the same transform relative to their parent joint).
     case root = 0
     case hips_joint = 1 // Could be redundant with root since root is at the hip.
     case left_upLeg_joint = 2

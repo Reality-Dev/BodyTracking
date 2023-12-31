@@ -8,6 +8,7 @@
 import ARKit
 import RealityKit
 import RKUtilities
+import BTShared
 
 internal class HandTracking3DSystem: System {
     static var dependencies: [SystemDependency] {
@@ -57,21 +58,56 @@ internal class HandTracking3DSystem: System {
                 handAnchor.handAnchorComponent.handIsRecognized.value = hand2D.handIsRecognized.value
             }
 
-            updateJointPositions(on: handAnchor, sceneDepth: sceneDepth)
+            updateTransforms(on: handAnchor, sceneDepth: sceneDepth)
 
             updateTrackedEntities(on: handAnchor)
         }
     }
+    
+    private let jointMapping: [HandJoint.JointName: Int] = {
+        let jointNames = HandJoint.allHandJoints
+        
+        var jointMapping = [HandJoint.JointName: Int]()
+        
+        jointNames.enumerated().forEach {
+            jointMapping[$0.1] = $0.0
+        }
+        return jointMapping
+    }()
 
     /*
      If we have the 2D screen position of the joint and we have the depth at that point, we can project from that 2D position into world space
      (using ARView.ray(through screenPoint: CGPoint))
      and get a 3D world-space coordinate for that joint.
      */
-    private func updateJointPositions(on handAnchor: HandAnchor,
+    private func updateTransforms(on handAnchor: HandAnchor,
                                       sceneDepth: CVPixelBuffer)
     {
-        let jointNames = HandTracker2D.allHandJoints
+        
+        guard
+            let positions2D = get2DPositions(on: handAnchor),
+            
+            // Gather all values at once instead of locking the buffer multiple times.
+            let depthsAtPoints = sceneDepth.values(from: positions2D.avPositions)
+        else { return }
+        
+        updateAnchorTransform(of: handAnchor,
+                              screenPositions: positions2D.screenPositions,
+                              depthsAtPoints: depthsAtPoints)
+
+        guard
+            let modelPositions = getModelPositions(on: handAnchor,
+                                                   depthsAtPoints: depthsAtPoints,
+                                                   screenPositions: positions2D.screenPositions)
+        else {return}
+        
+        setJointTransforms(on: handAnchor,
+                           modelPositions: modelPositions)
+    }
+    
+    private func get2DPositions(on handAnchor: HandAnchor) -> (screenPositions: [CGPoint],
+                                                               avPositions: [CGPoint])? {
+        let jointNames = HandJoint.allHandJoints
 
         let hand2D = handAnchor.handTracker2D.hand2D
 
@@ -84,56 +120,164 @@ internal class HandTracking3DSystem: System {
         let avPositions = jointNames.compactMap {
             hand2D.jointAVFoundationPositions[$0]
         }
-
+        
         guard
             screenPositions.count == jointCount,
-            avPositions.count == jointCount,
-            // Gather all values at once instead of locking the buffer multiple times.
-            let depthsAtPoints = sceneDepth.values(from: avPositions)
-        else { return }
+            avPositions.count == jointCount
+        else { return nil }
+        
+        return (screenPositions, avPositions)
+    }
+    
+    private func getModelPositions(on handAnchor: HandAnchor,
+                                   depthsAtPoints: [Float],
+                                   screenPositions: [CGPoint]
+    ) -> [simd_float3]? {
+        let jointNames = HandJoint.allHandJoints
 
-        let positions = zip(screenPositions, depthsAtPoints)
+        let projectionData = zip(screenPositions, depthsAtPoints)
+        let modelPositions = zip(jointNames, projectionData).compactMap { jointName, projectionDataPoint in
 
-        // TODO: Move tips inwards.
-
-        let worldPositions = zip(jointNames, positions).compactMap { jointName, positions in
-            worldPosition(on: handAnchor,
+            // Wrist and tip depths are not used.
+            return modelPosition(on: handAnchor,
                           jointName: jointName,
-                          screenPosition: positions.0,
-                          depth: positions.1)
+                          screenPosition: projectionDataPoint.0,
+                          depth: projectionDataPoint.1)
         }
 
-        guard worldPositions.count == jointCount else { return }
+        guard modelPositions.count == HandJoint.allHandJoints.count else { return nil }
+        
+        return modelPositions
+    }
+    
+    private func updateAnchorTransform(of handAnchor: HandAnchor,
+                                       screenPositions: [CGPoint],
+                                       depthsAtPoints: [Float]) {
 
-        // TODO: Set orientation as well.
-        for (jointName, worldPosition) in zip(jointNames, worldPositions) {
-            handAnchor.handAnchorComponent.jointTransforms[jointName]?.translation = worldPosition
-        }
-
-        if let wristPosition = handAnchor.handAnchorComponent.jointTransforms[.wrist]?.translation {
-            handAnchor.worldPosition = wristPosition
-        }
+        guard let worldWristPosition = worldPosition(of: .wrist,
+                                                  on: handAnchor,
+                                                  screenPositions: screenPositions,
+                                                     depthsAtPoints: depthsAtPoints) else {return}
+        
+            handAnchor.worldPosition = worldWristPosition
+            
+            //$$ hacked for now until find proper ML model to use instead.
+            if let orientation = Self.arView?.cameraTransform.rotation {
+                
+                handAnchor.worldRotation = orientation
+            }
     }
 
     private func updateTrackedEntities(on handAnchor: HandAnchor) {
-        let jointTransforms = handAnchor.handAnchorComponent.jointTransforms
+        let jointModelTransforms = handAnchor.handAnchorComponent.jointModelTransforms
 
         for handTracker3D in handAnchor.handTrackers3D {
             handTracker3D.hand3D.trackedEntities.forEach {
-                if let transform = jointTransforms[$0.key] {
-                    $0.value.setTransformMatrix(transform, relativeTo: nil)
+                if let transform = jointModelTransforms[$0.key] {
+                    $0.value.setTransformMatrix(transform, relativeTo: handTracker3D)
                 }
             }
         }
     }
+    
+    private func setJointTransforms(on handAnchor: HandAnchor,
+                                    modelPositions: [simd_float3]) {
 
+        
+        var jointModelTransforms = handAnchor.handAnchorComponent.jointModelTransforms
+        
+        for (jointName, index) in jointMapping {
+            
+            if jointName == .wrist { continue }
+            
+            // -- POSITION --
+            let modelPosition = modelPositions[index]
+            
+            jointModelTransforms[jointName]?.translation = modelPosition
+            
+            // -- ORIENTATION --
+            let currentOrientation = jointModelTransforms[jointName]?.orientation ?? .init()
+            
+            let orientationTarget = HandJoint.orientationTarget[jointName]!
+            
+            let targetPosition = modelPositions[jointMapping[orientationTarget]!]
+            
+            let newOrientation = getOrientation(for: jointName,
+                                                currentPosition: modelPosition,
+                                                currentOrientation: currentOrientation,
+                                                targetPosition: targetPosition)
+            
+            
+            jointModelTransforms[jointName]?.orientation = newOrientation
+            
+        }
+        
+        handAnchor.handAnchorComponent.jointModelTransforms = jointModelTransforms
+    }
+    
+    private func getOrientation(for jointName: HandJoint.JointName,
+                                currentPosition: simd_float3,
+                                currentOrientation: simd_quatf,
+                                targetPosition: simd_float3,
+                                t: Float = 0.5,
+                                offset: simd_quatf? = nil) -> simd_quatf {
+        var targetPosition = targetPosition
+        if HandJoint.tipJoints.contains(jointName) {
+            targetPosition = currentPosition + (currentPosition - targetPosition)
+        }
+        
+        var targetOrientation = simd_quatf(from: .forward, to: normalize(targetPosition - currentPosition))
+        
+        if let offset {
+            targetOrientation *= offset
+        }
+        
+        return simd_slerp(currentOrientation, targetOrientation, t)
+    }
+
+    /// Get the model-space position from a UIKit screen point and a depth value
+    /// - Parameters:
+    ///   - screenPosition: A `CGPoint` representing a point on screen in UIKit coordinates.
+    ///   - depth: The depth at this coordinate, in meters.
+    /// - Returns: The position in model space (relative to the` HandAnchor`) of this coordinate at this depth.
+    public func modelPosition(on handAnchor: HandAnchor,
+                              jointName: HandJoint.JointName,
+                              screenPosition: CGPoint,
+                              depth: Float) -> simd_float3?
+    {
+       if let worldSpacePosition = worldPosition(on: handAnchor,
+                                              jointName: jointName,
+                                              screenPosition: screenPosition,
+                                                 depth: depth) {
+           return handAnchor.convert(position: worldSpacePosition, from: nil)
+       }
+        return nil
+    }
+    
+    private func worldPosition(of joint: HandJoint.JointName,
+     on handAnchor: HandAnchor,
+     screenPositions: [CGPoint],
+     depthsAtPoints: [Float]) -> simd_float3? {
+        
+        let jointIndex = jointMapping[joint]!
+        
+        let jointScreenPosition = screenPositions[jointIndex]
+        
+        let jointDepth = depthsAtPoints[jointIndex]
+        
+        return worldPosition(on: handAnchor,
+                                                  jointName: joint,
+                                                  screenPosition: jointScreenPosition,
+                                                  depth: jointDepth)
+    }
+    
     /// Get the world-space position from a UIKit screen point and a depth value
     /// - Parameters:
-    ///   - screenPosition: A CGPoint representing a point on screen in UIKit coordinates.
+    ///   - screenPosition: A `CGPoint` representing a point on screen in UIKit coordinates.
     ///   - depth: The depth at this coordinate, in meters.
     /// - Returns: The position in world space of this coordinate at this depth.
     public func worldPosition(on handAnchor: HandAnchor,
-                              jointName: HandTracker2D.HandJointName,
+                              jointName: HandJoint.JointName,
                               screenPosition: CGPoint,
                               depth: Float) -> simd_float3?
     {
@@ -141,21 +285,45 @@ internal class HandTracking3DSystem: System {
             let arView = Self.arView,
             let rayResult = arView.ray(through: screenPosition)
         else { return nil }
+        
+        let depthValues = handAnchor.handAnchorComponent.depthValues
 
         var depth = depth
-
-        if let middleDepth = handAnchor.handAnchorComponent.depthValues[.middleMCP],
-           middleDepth < 0.7,
-           abs(depth - middleDepth) > 0.3
+        
+        // TODO: add optional smoothing.
+        
+        // Tip joints have unreliable depth.
+        if HandJoint.tipJoints.contains(jointName),
+           let depthTarget = HandJoint.orientationTarget[jointName],
+           let targetDepth = depthValues[depthTarget] {
+            depth = targetDepth
+        }
+        
+        let previousDepth = depthValues[jointName]
+        
+        // Middle depth is more stable.
+        if let middleDepth = depthValues[.middleMCP],
+           abs(depth - middleDepth) > 0.1
         {
-            depth = middleDepth
+            if let previousDepth {
+                depth = previousDepth
+            } else {
+                depth = middleDepth
+            }
+            
         } else {
+            // 2D screen positions are pretty good, but depth values are jittery, so they need smoothing.
+            if let previousDepth {
+                depth = Float.lerp(previousDepth, depth, progress: 0.2)
+            }
+            
             handAnchor.handAnchorComponent.depthValues[jointName] = depth
         }
 
         // rayResult.direction is a normalized (1 meter long) vector pointing in the correct direction, and we want to go the length of depth along this vector.
         let worldOffset = rayResult.direction * depth
         let worldPosition = rayResult.origin + worldOffset
+        
         return worldPosition
     }
 }
