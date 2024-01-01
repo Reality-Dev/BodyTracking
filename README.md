@@ -1,14 +1,16 @@
 # BodyTracking
 
-This package includes classes that enable easy, convenient body tracking in RealityKit.
-
-For expert guidance and examples, check out this course: //$$
+This package enables easy, convenient body tracking in RealityKit.
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/Reality-Dev/BodyTracking?color=orange&display_name=tag&label=SwiftPM&logo=swift&style=plastic"/>
   <img src="https://img.shields.io/static/v1?label=platform&message=iOS&color=lightgrey&style=plastic"/>
   <img src="https://img.shields.io/static/v1?label=Swift&message=5.5&color=orange&style=plastic&logo=swift"/>
 </p>
+
+## Usage
+
+For expert guidance and examples, check out this course: //$$
 
 ## What's Included
 
@@ -18,17 +20,39 @@ This package includes code for:
 - 2D Hand Tracking
 - 3D Hand Tracking
 - 3D Face Tracking
+- Face Geometry Morphing
 - 3D Eye Tracking
 - People Occlusion
-- Loading a BodyTrackedEntity (for 3D character animation)
 
+For character animation, see [RKLoader](https://github.com/Reality-Dev/RealityKit-Asset-Loading)
+``` swift
+import RKLoader
+
+var character: BodyTrackedEntity?
+
+...
+
+func loadCharacter {
+        Task(priority: .userInitiated) { [weak self] in
+            let character = try await RKLoader.loadBodyTrackedEntityAsync(named: "character")
+
+            self?.character = character
+
+            let bodyAnchor = AnchorEntity(.body)
+            
+            self?.scene.addAnchor(bodyAnchor)
+            
+            bodyAnchor.addChild(character)
+        }
+}
+```
 
 ## Requirements
 
-- iOS 13 or macOS 10.15
+- iOS 15
+- A12 Processor or later.
 - Swift 5.2
 - Xcode 11
-- A12 Processor or later.
 
 ## Installation
 
@@ -37,18 +61,6 @@ This package includes code for:
 Add the URL of this repository to your Xcode 11+ Project under:
     File > Add Packages
     `https://github.com/Reality-Dev/BodyTracking`
-
-## Usage
-
-Add `import BodyTracking` or `import FaceTracking` or `import HandTracking` to the top of your swift file to start.
-
-
-While using `BodyEntity3D` you can access the joint transforms relative to the root/hip joint each frame by using         `jointModelTransform(for:)`.
-For example, you could find the right leg's transform like this:
-
-``` swift
-        jointModelTransform(for: .right_leg_joint)
-```
 
 ## Support
 
