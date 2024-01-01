@@ -18,7 +18,7 @@ public extension ARView {
         guard ARWorldTrackingConfiguration.supportsFrameSemantics(.personSegmentation) else {
             let errorMessage = "This device does Not support person segmentation."
             print(errorMessage)
-            throw BodyTrackingError.runtimeError(errorMessage)
+            throw BodyTrackingError.unsupportedFrameSemantics("personSegmentation frame semantic is unavailable.")
         }
         if let configuration = session.configuration {
             config = configuration
@@ -43,9 +43,5 @@ public extension ARView {
         }
         config.frameSemantics.remove([.personSegmentationWithDepth, .personSegmentation])
         session.run(config)
-    }
-
-    enum BodyTrackingError: Error {
-        case runtimeError(String)
     }
 }

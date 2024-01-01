@@ -7,6 +7,7 @@
 
 import ARKit
 import RealityKit
+import BTShared
 
 // MARK: - Configuration
 
@@ -16,7 +17,7 @@ public extension ARView {
         guard ARWorldTrackingConfiguration.supportsFrameSemantics(.bodyDetection) else {
             let errorMessage = "This device does Not support body detection."
             print(errorMessage)
-            throw BodyTrackingError.runtimeError(errorMessage)
+            throw BodyTrackingError.unsupportedFrameSemantics("bodyDetection frame semantic is unavailable.")
         }
         let config2D = ARWorldTrackingConfiguration()
         config2D.frameSemantics = .bodyDetection
@@ -39,7 +40,7 @@ public extension ARView {
 
             print(errorMessage)
 
-            throw BodyTrackingError.runtimeError(errorMessage)
+            throw BodyTrackingError.unsupportedConfiguration("ARBodyTrackingConfiguration is unavailable.")
         }
 
         // This automatically adds the .bodyDetection frame semantic to the session configuration for 2D tracking as well.

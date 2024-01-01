@@ -23,7 +23,7 @@ public extension ARView {
             showAlert(title: "Uh oh...", message: "This device does Not support face tracking.")
             let errorMessage = "This device does Not support face tracking. This feature is only supported on devices with an A12 chip."
             print(errorMessage)
-            throw BodyTrackingError.runtimeError(errorMessage)
+            throw BodyTrackingError.unsupportedConfiguration("ARFaceTrackingConfiguration is unavailable.")
         }
 
         let config3D = ARFaceTrackingConfiguration()
