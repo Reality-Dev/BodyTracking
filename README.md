@@ -53,7 +53,7 @@ func loadCharacter {
 
 - iOS 15
 - A12 Processor or later.
-- Swift 5.2
+- Swift 5.5
 - Xcode 11
 
 ## Installation

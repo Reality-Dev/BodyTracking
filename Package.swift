@@ -13,7 +13,7 @@ let package = Package(
     ],
     dependencies: [
         .package(name: "RKUtilities", url: "https://github.com/Reality-Dev/RealityKit-Utilities", from: "1.0.0"),
-        .package(url: "https://github.com/Reality-Dev/RealityMorpher", branch: "main"),
+        .package(url: "https://github.com/Reality-Dev/RealityMorpher", from: "2.0.0"),
     ],
     targets: [
         .target(name: "BodyTracking",
