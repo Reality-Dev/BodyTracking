@@ -88,6 +88,7 @@ internal class HandTracking3DSystem: System {
             let positions2D = get2DPositions(on: handAnchor),
             
             // Gather all values at once instead of locking the buffer multiple times.
+            // Tip depths are not used.
             let depthsAtPoints = sceneDepth.values(from: positions2D.avPositions)
         else { return }
         
@@ -159,13 +160,26 @@ internal class HandTracking3DSystem: System {
                                                   screenPositions: screenPositions,
                                                      depthsAtPoints: depthsAtPoints) else {return}
         
-            handAnchor.worldPosition = worldWristPosition
+        handAnchor.worldPosition = worldWristPosition
+        
+        if let worldMiddlePosition = worldPosition(of: .middleMCP,
+                                                  on: handAnchor,
+                                                  screenPositions: screenPositions,
+                                                     depthsAtPoints: depthsAtPoints),
+           let worldIndexPosition = worldPosition(of: .indexMCP,
+                                                     on: handAnchor,
+                                                     screenPositions: screenPositions,
+                                                  depthsAtPoints: depthsAtPoints) {
+            let upDirection = triangleNormal(vertex1: worldMiddlePosition,
+                                    vertex2: worldWristPosition,
+                                    vertex3: worldIndexPosition)
             
-            //$$ hacked for now until find proper ML model to use instead.
-            if let orientation = Self.arView?.cameraTransform.rotation {
-                
-                handAnchor.worldRotation = orientation
-            }
+            let newOrientation = orientationFromVects(rootPoint: worldWristPosition,
+                                                            forwardPoint: worldMiddlePosition,
+                                                            upDirection: upDirection)
+            
+            handAnchor.worldRotation = simd_slerp(handAnchor.worldRotation, newOrientation, 0.6)
+        }
     }
 
     private func updateTrackedEntities(on handAnchor: HandAnchor) {
@@ -234,6 +248,34 @@ internal class HandTracking3DSystem: System {
         
         return simd_slerp(currentOrientation, targetOrientation, t)
     }
+    
+    private func triangleNormal(vertex1: SIMD3<Float>,
+                                vertex2: SIMD3<Float>,
+                                vertex3: SIMD3<Float>) -> SIMD3<Float> {
+        let vector1 = vertex1 - vertex2
+        let vector2 = vertex3 - vertex2
+
+        // Calculate the cross product to get the normal vector
+        let normalVector = cross(vector1, vector2)
+
+        // Normalize the result to get a unit normal vector
+        return normalize(normalVector)
+    }
+    
+    private func orientationFromVects(rootPoint: SIMD3<Float>,
+                                  forwardPoint: SIMD3<Float>,
+                                          upDirection: SIMD3<Float>) -> simd_quatf {
+        
+        let forwardDirection = normalize(forwardPoint - rootPoint)
+
+        let quaternionForward = simd_quatf(from: .forward, to: forwardDirection)
+
+        let rotatedUp = quaternionForward.act(simd_float3(0, 1, 0))
+        
+        let adjustedQuaternion = simd_quatf(from: rotatedUp, to: upDirection) * quaternionForward
+
+        return adjustedQuaternion
+    }
 
     /// Get the model-space position from a UIKit screen point and a depth value
     /// - Parameters:
@@ -286,9 +328,24 @@ internal class HandTracking3DSystem: System {
             let rayResult = arView.ray(through: screenPosition)
         else { return nil }
         
-        let depthValues = handAnchor.handAnchorComponent.depthValues
-
         var depth = depth
+        
+        smoothDepthValue(on: jointName,
+                         handAnchor: handAnchor,
+                         depth: &depth)
+
+        // rayResult.direction is a normalized (1 meter long) vector pointing in the correct direction, and we want to go the length of depth along this vector.
+        let worldOffset = rayResult.direction * depth
+        let worldPosition = rayResult.origin + worldOffset
+        
+        return worldPosition
+    }
+    
+    private func smoothDepthValue(on jointName: HandJoint.JointName,
+                                  handAnchor: HandAnchor,
+                                  depth: inout Float){
+        
+        let depthValues = handAnchor.handAnchorComponent.depthValues
         
         // TODO: add optional smoothing.
         
@@ -305,9 +362,14 @@ internal class HandTracking3DSystem: System {
         if let middleDepth = depthValues[.middleMCP],
            abs(depth - middleDepth) > 0.1
         {
-            if let previousDepth {
+            if let previousDepth,
+               // As the hand moves rapidly closer to or away from the camera, more distal values become less reliable.
+               abs(previousDepth - middleDepth) < 0.11
+            {
                 depth = previousDepth
+                
             } else {
+                
                 depth = middleDepth
             }
             
@@ -319,11 +381,5 @@ internal class HandTracking3DSystem: System {
             
             handAnchor.handAnchorComponent.depthValues[jointName] = depth
         }
-
-        // rayResult.direction is a normalized (1 meter long) vector pointing in the correct direction, and we want to go the length of depth along this vector.
-        let worldOffset = rayResult.direction * depth
-        let worldPosition = rayResult.origin + worldOffset
-        
-        return worldPosition
     }
 }
