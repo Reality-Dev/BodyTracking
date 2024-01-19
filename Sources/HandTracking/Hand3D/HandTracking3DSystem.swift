@@ -347,8 +347,6 @@ internal class HandTracking3DSystem: System {
         
         let depthValues = handAnchor.handAnchorComponent.depthValues
         
-        // TODO: add optional smoothing.
-        
         // Tip joints have unreliable depth.
         if HandJoint.tipJoints.contains(jointName),
            let depthTarget = HandJoint.orientationTarget[jointName],

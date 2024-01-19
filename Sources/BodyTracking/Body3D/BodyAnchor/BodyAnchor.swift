@@ -17,7 +17,6 @@ public class BodyAnchor: Entity, HasBodyAnchoring {
             component(forType: BodyAnchorComponent.self) ?? .init()
         }
         set {
-            // Do not use this: `components[BodyAnchorComponent.self] = newValue` in case newValue is nil, because `bodyAnchorComponent` should never be nil on `BodyAnchor`.
             components.set(newValue)
         }
     }

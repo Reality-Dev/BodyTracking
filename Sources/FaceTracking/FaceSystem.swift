@@ -45,12 +45,8 @@ final class FaceSystem: System {
 
     private func updateMorphedEntities(faceAnchor: FaceAnchor) {
         for morphedEntity in faceAnchor.morphedEntities {
-            let values = morphedEntity.targetLocations.compactMap { faceAnchor.face.blendShapes[$0] }
 
-            // Values must be in the same order and have the same total count as the corresponding targets.
-            guard values.count == morphedEntity.targetLocations.count else { return }
-
-            morphedEntity.morphComponent.setTargetWeights(.init(values))
+            morphedEntity.update(with: faceAnchor.face.blendShapes)
         }
     }
 }

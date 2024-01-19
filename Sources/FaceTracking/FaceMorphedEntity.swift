@@ -26,27 +26,48 @@ public final class FaceMorphedEntity: Entity, HasModel, HasMorph {
     public init(baseModel: ModelComponent,
                 targetMapping: [ARFaceAnchor.BlendShapeLocation: ModelComponent])
     {
-        let locations = Array(targetMapping.keys)
+        targetLocations = Array(targetMapping.keys)
 
-        let targets = locations.compactMap { targetMapping[$0] }
-
-        targetLocations = locations
+        let targets = targetLocations.compactMap { targetMapping[$0] }
 
         super.init()
 
         model = baseModel
 
-        // This will handle throwing an error if an unsupported number of targets was passed.
-        if let morphComponent = try? MorphComponent(entity: self,
-                                                    targets: targets)
-        {
-            components.set(morphComponent)
-        } else {
-            assertionFailure("Failed to create MorphComponent for FaceMorphedEntity")
+        do {
+            // This will handle throwing an error if an unsupported number of targets was passed.
+            morphComponent = try MorphComponent(entity: self,
+                                                targets: targets)
+        } catch {
+            assertionFailure("Failed to create MorphComponent for FaceMorphedEntity \(error)")
         }
     }
 
     @MainActor required init() {
         fatalError("init() has not been implemented")
+    }
+    
+    /// Use this to perform your own morphing; If you attach this FaceMorphedEntity to a FaceAnchor then there is no need to call this method yourself.
+    public func update(with blendShapeContainer: BlendShapeContainer) {
+        var weights = [ARFaceAnchor.BlendShapeLocation: Float]()
+        
+        targetLocations.forEach {
+            weights[$0] = blendShapeContainer[$0]
+        }
+
+        setTargetWeights(weights: weights)
+    }
+    
+    /// Use this to perform your own morphing; If you attach this FaceMorphedEntity to a FaceAnchor then there is no need to call this method yourself.
+    public func setTargetWeights(weights: [ARFaceAnchor.BlendShapeLocation: Float]) {
+        
+        let values = targetLocations.compactMap { weights[$0] }
+        
+        guard values.count == targetLocations.count else {
+            assertionFailure("Weights must at least include the same members as the corresponding targets.")
+            return
+        }
+        
+        morphComponent.setTargetWeights(.init(values))
     }
 }

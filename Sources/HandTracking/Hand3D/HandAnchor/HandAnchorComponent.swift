@@ -15,6 +15,10 @@ public protocol HasHandAnchoring: HasAnchoring {
 }
 
 public struct HandAnchorComponent: Component {
+    
+    // TODO: Make orientation of descedant joints optional - for efficiency.
+    // When orientation is false, track only the used joints.
+    // TODO: Add optional smoothing amount - position and orientation affected.
     public internal(set) var handWasInitiallyIdentified = CurrentValueSubject<Bool, Never>(false)
 
     public internal(set) var handIsRecognized = CurrentValueSubject<Bool, Never>(false)

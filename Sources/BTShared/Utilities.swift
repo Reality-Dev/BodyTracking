@@ -16,7 +16,7 @@ public extension UIView {
     func showAlert(title: String, message: String) {
         guard
             let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-            let mainWindow = windowScene.windows.first else { return }
+            let mainWindow = windowScene.windows.first(where: { $0.isKeyWindow }) else { return }
 
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Dismiss", style: .default, handler: nil))

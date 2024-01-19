@@ -12,7 +12,7 @@ This package enables easy, convenient body tracking in RealityKit.
 
 ## Usage
 
-For expert guidance and examples, check out this course: //$$
+Course coming soon that includes expert guidance and examples.
 
 ## What's Included
 

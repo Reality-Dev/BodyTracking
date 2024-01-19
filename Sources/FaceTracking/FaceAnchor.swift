@@ -15,7 +15,6 @@ public class FaceAnchor: Entity, HasFaceAnchoring {
         get {
             component(forType: FaceAnchorComponent.self) ?? .init()
         } set {
-            // Do not use this: `components[FaceAnchorComponent.self] = newValue` in case newValue is nil, because `face` should never be nil on `FaceAnchor`.
             components.set(newValue)
         }
     }

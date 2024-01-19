@@ -10,7 +10,6 @@ public class BodyEntity3D: Entity, HasBody3D {
             component(forType: Body3DComponent.self) ?? .init(smoothingAmount: 0)
         }
         set {
-            // Do not use this: `components[Body3DComponent.self] = newValue` in case newValue is nil, because `body3D` should never be nil on `BodyEntity3D`.
             components.set(newValue)
         }
     }
