@@ -8,8 +8,6 @@ This package enables easy, convenient body tracking in RealityKit.
   <img src="https://img.shields.io/static/v1?label=Swift&message=5.5&color=orange&style=plastic&logo=swift"/>
 </p>
 
-![Face Morphing](https://github.com/Reality-Dev/BodyTracking/blob/master/Media/Face_Morph_Preview.gif?raw=true)
-
 ## Usage
 
 Course coming soon that includes expert guidance and examples.
