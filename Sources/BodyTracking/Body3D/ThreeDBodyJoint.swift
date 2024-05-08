@@ -8,9 +8,9 @@
 import ARKit
 import RealityKit
 
-// MARK: - TrackedBodyJoint
+// MARK: - JointEntity
 
-public class TrackedBodyJoint: Entity {
+public class JointEntity: Entity {
     public private(set) var jointName: ThreeDBodyJoint!
 
     required init(jointName: ThreeDBodyJoint) {
@@ -132,11 +132,11 @@ public enum ThreeDBodyJoint: Int, CaseIterable {
         var childJoints = [ThreeDBodyJoint]()
 
         let default3DBody = ARSkeletonDefinition.defaultBody3D
+        
         let parentIndices = default3DBody.parentIndices
 
-        for (jointIndex, parentIndex) in parentIndices.enumerated() {
-            if parentIndex == rawValue,
-               let childJoint = ThreeDBodyJoint(rawValue: jointIndex)
+        for (jointIndex, parentIndex) in parentIndices.enumerated() where parentIndex == rawValue {
+            if let childJoint = ThreeDBodyJoint(rawValue: jointIndex)
             {
                 childJoints.append(childJoint)
             }

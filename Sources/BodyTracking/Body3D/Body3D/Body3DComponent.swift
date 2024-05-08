@@ -16,7 +16,7 @@ public protocol HasBody3D {
 // MARK: - Body3DComponent
 
 public struct Body3DComponent: Component {
-    internal var trackedJoints = Set<TrackedBodyJoint>()
+    internal var trackedJoints = Set<JointEntity>()
 
     /// An amount, from 0 to 1, that the joint movements are smoothed by.
     public var smoothingAmount: Float = 0
@@ -24,7 +24,7 @@ public struct Body3DComponent: Component {
     internal var needsSmoothing: Bool
 
     public init(smoothingAmount: Float,
-                trackedJoints: Set<TrackedBodyJoint> = [])
+                trackedJoints: Set<JointEntity> = [])
     {
         self.smoothingAmount = smoothingAmount
         self.needsSmoothing = smoothingAmount > 0

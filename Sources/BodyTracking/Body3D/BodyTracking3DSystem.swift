@@ -71,13 +71,16 @@ final class BodyTracking3DSystem: System {
 
     // TODO: Use SmoothDamp instead of Lerp.
 
-    private func smoothJointMotion(_ joint: TrackedBodyJoint,
+    private func smoothJointMotion(_ joint: JointEntity,
                                    bodyEntity: BodyEntity3D,
                                    newTransform: simd_float4x4)
     {
         // Scale isn't changing for body joints, so don't smooth that.
 
-        let t = (1 - bodyEntity.body3D.smoothingAmount)
+        let smoothedAmount = (1 - bodyEntity.body3D.smoothingAmount)
+        
+        // Don't smooth hips joint - to prevent BodyEntity3D from flying through space whenever the body is initially detected.
+        let t = joint.jointName == .hips_joint ? 1 : smoothedAmount
 
         let newTransform = simd_float4x4.mixOrientationTranslation(joint.transform.matrix, newTransform, t: t)
 

@@ -49,17 +49,17 @@ public class BodyEntity3D: Entity, HasBody3D {
     ///   - entity: The entity to attach.
     ///   - jointName: The joint to attach the entity to.
     ///   - preservingWorldTransform: A Boolean that you set to true to preserve the entity’s world transform, or false to preserve its relative transform. Use true when you want a model to keep its effective location and size within a scene. If you want to offset an entity from a joint transform, then set this to false.
-    public func attach(thisEntity entity: Entity,
-                       toThisJoint jointName: ThreeDBodyJoint,
+    public func attach(entity: Entity,
+                       to jointName: ThreeDBodyJoint,
                        preservingWorldTransform: Bool = false)
     {
-        var joint: TrackedBodyJoint
+        var joint: JointEntity
 
         if let jointLocal = body3D.trackedJoints.first(where: { $0.jointName == jointName }) {
             joint = jointLocal
 
         } else { // body3DComponent.trackedJoints does Not contain this joint yet.
-            let jointLocal = TrackedBodyJoint(jointName: jointName)
+            let jointLocal = JointEntity(jointName: jointName)
 
             /*
              For efficiency: Entities are parented to the root, not parented to local parent joint. Not using local transform.
