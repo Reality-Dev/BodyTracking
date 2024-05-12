@@ -24,6 +24,8 @@ public class FaceAnchor: Entity, HasFaceAnchoring {
     public private(set) var rightEye = Entity()
 
     @WeakCollection internal var morphedEntities = [FaceMorphedEntity]()
+    
+    internal var eyeAttachments = [EyeAttachment]()
 
     public required init(session: ARSession) {
         super.init()
@@ -60,6 +62,28 @@ public class FaceAnchor: Entity, HasFaceAnchoring {
 
         if automaticallyAddChild { addChild(morphedEntity) }
     }
+    
+    /// Attaches an    `Entity`'s transform to one of the eyes on this `FaceAnchor`.
+    /// 
+    /// - Parameters:
+    ///   - entity: The entity to attach.
+    ///   - chirality: The eye to select. i.e. left or right.
+    ///   - trackedTransforms: The set of transforms to track. Options include `position` and `rotation`.
+    public func attach(entity: Entity,
+                       toEye chirality: Chirality,
+                       tracking trackedTransforms: TransformationOptions = .rotation)
+    {
+        guard eyeAttachments.contains(where: { $0.entity == entity }) == false else {
+            print("Already added Entity \(entity.name) to this FaceAnchor")
+            return
+        }
+
+        eyeAttachments.append(.init(entity: entity,
+                                        chirality: chirality,
+                                        trackedTransforms: trackedTransforms))
+
+        
+    }
 
     /// Destroy this Entity and its references to any ARViews
     /// This helps prevent memory leaks.
@@ -69,7 +93,36 @@ public class FaceAnchor: Entity, HasFaceAnchoring {
         }
 
         morphedEntities.removeAll()
+        
+        eyeAttachments.removeAll()
 
         removeFromParent()
+    }
+}
+
+// MARK: - Eye Tracking Data
+public extension FaceAnchor {
+    struct TransformationOptions: OptionSet {
+        public let rawValue: Int
+
+        public static let position = TransformationOptions(rawValue: 1 << 0)
+        
+        public static let rotation = TransformationOptions(rawValue: 1 << 1)
+        
+        public init(rawValue: Int) {
+            self.rawValue = rawValue
+        }
+    }
+    
+    enum Chirality {
+        case left, right
+    }
+    
+    internal struct EyeAttachment {
+        weak var entity: Entity?
+        
+        var chirality: Chirality
+        
+        var trackedTransforms: TransformationOptions
     }
 }

@@ -1,4 +1,4 @@
-Copyright (c) 2021 Grant M Jarvis
+Copyright (c) 2024 Grant M Jarvis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

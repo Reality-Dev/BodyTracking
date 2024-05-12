@@ -35,18 +35,50 @@ final class FaceSystem: System {
                 faceAnchor.face.faceIsTracked.value = arFaceAnchor.isTracked
             }
 
-            faceAnchor.leftEye.transform.matrix = arFaceAnchor.leftEyeTransform
-
-            faceAnchor.rightEye.transform.matrix = arFaceAnchor.rightEyeTransform
-
+            updateEyes(arFaceAnchor: arFaceAnchor,
+                       faceAnchor: faceAnchor)
+            
+            updateEyeTrackedEntities(faceAnchor: faceAnchor)
+            
             updateMorphedEntities(faceAnchor: faceAnchor)
         }
+    }
+    
+    private func updateEyes(arFaceAnchor: ARFaceAnchor,
+                            faceAnchor: FaceAnchor) {
+        faceAnchor.leftEye.transform.matrix = arFaceAnchor.leftEyeTransform
+
+        faceAnchor.rightEye.transform.matrix = arFaceAnchor.rightEyeTransform
     }
 
     private func updateMorphedEntities(faceAnchor: FaceAnchor) {
         for morphedEntity in faceAnchor.morphedEntities {
 
             morphedEntity.update(with: faceAnchor.face.blendShapes)
+        }
+    }
+    
+    private func updateEyeTrackedEntities(faceAnchor: FaceAnchor) {
+        for eyeAttachment in faceAnchor.eyeAttachments {
+            guard let eyeTrackedEntity = eyeAttachment.entity else {continue}
+            let trackedTransforms = eyeAttachment.trackedTransforms
+            
+            var eyeTarget: Entity?
+            
+            switch eyeAttachment.chirality {
+            case .left:
+                eyeTarget = faceAnchor.leftEye
+            case .right:
+                eyeTarget = faceAnchor.rightEye
+            }
+            guard let eyeTarget else {continue}
+            
+            if trackedTransforms.contains(.rotation) {
+                eyeTrackedEntity.orientation = eyeTarget.orientation
+            }
+            if trackedTransforms.contains(.position) {
+                eyeTrackedEntity.position = eyeTarget.position
+            }
         }
     }
 }
