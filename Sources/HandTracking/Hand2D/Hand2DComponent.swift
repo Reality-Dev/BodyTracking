@@ -19,8 +19,10 @@ public struct Hand2DComponent {
 
     public var confidenceThreshold: Float!
 
+    /// Value is true if the hand has ever been recognized.
     public internal(set) var handWasInitiallyIdentified = CurrentValueSubject<Bool, Never>(false)
 
+    /// Value is true if the hand is currently recognized.
     public internal(set) var handIsRecognized = CurrentValueSubject<Bool, Never>(false)
 
     /// Screen-space coordinates. These can be used with a UIKit view or ARView covering the entire screen.

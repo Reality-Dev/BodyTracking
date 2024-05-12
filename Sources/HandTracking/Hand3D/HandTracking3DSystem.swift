@@ -25,42 +25,61 @@ internal class HandTracking3DSystem: System {
         // TODO: Support multiple hands.
         context.scene.performQuery(Self.handAnchorQuery).compactMap { $0 as? HandAnchor }.forEach { handAnchor in
 
-            guard
-                handAnchor.handTracker2D.hand2D.handWasInitiallyIdentified.value,
-                let currentFrame = Self.arView?.session.currentFrame
-            else { return }
-
-            var sceneDepth: CVPixelBuffer?
-
-            switch handAnchor.handAnchorComponent.depthBufferSelection {
-            case .sceneDepth:
-                sceneDepth = currentFrame.sceneDepth?.depthMap
-
-            case .smoothedSceneDepth:
-                // smoothedSceneDepth works much better than estimatedDepthData.
-                sceneDepth = currentFrame.smoothedSceneDepth?.depthMap
-
-            case .personSegmentationWithDepth:
-                sceneDepth = currentFrame.estimatedDepthData
-            }
-
-            guard let sceneDepth else { return }
-
             let hand2D = handAnchor.handTracker2D.hand2D
             let anchorComponent = handAnchor.handAnchorComponent
+            
+            guard
+                hand2D.handWasInitiallyIdentified.value,
+                let currentFrame = Self.arView?.session.currentFrame,
+                let sceneDepth = getSceneDepth(currentFrame: currentFrame,
+                                                 anchorComponent: anchorComponent)
+            else { return }
 
-            // Safer than using sink in case the components get regenerated.
-            if anchorComponent.handWasInitiallyIdentified.value != hand2D.handWasInitiallyIdentified.value {
-                handAnchor.handAnchorComponent.handWasInitiallyIdentified.value = hand2D.handWasInitiallyIdentified.value
-            }
-
-            if anchorComponent.handIsRecognized.value != hand2D.handIsRecognized.value {
-                handAnchor.handAnchorComponent.handIsRecognized.value = hand2D.handIsRecognized.value
-            }
+            updateEnabled(handAnchor: handAnchor,
+                          anchorComponent: anchorComponent,
+                          hand2D: hand2D)
 
             updateTransforms(on: handAnchor, sceneDepth: sceneDepth)
 
             updateTrackedEntities(on: handAnchor)
+        }
+    }
+    
+    private func getSceneDepth(currentFrame: ARFrame,
+                               anchorComponent: HandAnchorComponent) -> CVPixelBuffer? {
+        switch anchorComponent.depthBufferSelection {
+        case .sceneDepth:
+            currentFrame.sceneDepth?.depthMap
+
+        case .smoothedSceneDepth:
+            // smoothedSceneDepth works much better than estimatedDepthData.
+            currentFrame.smoothedSceneDepth?.depthMap
+
+        case .personSegmentationWithDepth:
+            currentFrame.estimatedDepthData
+        }
+    }
+    
+    private func updateEnabled(handAnchor: HandAnchor,
+                               anchorComponent: HandAnchorComponent,
+                               hand2D: Hand2DComponent) {
+        // Safer than using sink in case the components get regenerated.
+        if anchorComponent.handWasInitiallyIdentified.value != hand2D.handWasInitiallyIdentified.value {
+            
+            handAnchor.handAnchorComponent.handWasInitiallyIdentified.value = hand2D.handWasInitiallyIdentified.value
+            
+            if handAnchor.autoEnableInitially &&
+                hand2D.handWasInitiallyIdentified.value {
+                handAnchor.isEnabled = true
+            }
+        }
+
+        if anchorComponent.handIsRecognized.value != hand2D.handIsRecognized.value {
+            handAnchor.handAnchorComponent.handIsRecognized.value = hand2D.handIsRecognized.value
+            
+            if handAnchor.autoToggleContinually {
+                handAnchor.isEnabled = hand2D.handIsRecognized.value
+            }
         }
     }
     

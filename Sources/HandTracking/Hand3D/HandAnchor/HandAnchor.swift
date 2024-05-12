@@ -39,14 +39,33 @@ public class HandAnchor: Entity, HasHandAnchoring {
         }
     }
 
+    internal let autoEnableInitially: Bool
+    
+    internal let autoToggleContinually: Bool
+    
+    /// Initializes a `HandAnchor`
+    /// - Parameter arView: The ARView that the hand is viewed from.
+    /// - Parameter depthBufferSelection: Which depth buffer option to use.
+    /// - Parameter autoEnableInitially: If set to true, the HandTracker3D will be disabled until the hand is initially recognized.
+    /// - Parameter autoToggleContinually: If set to true, the HandAnchor will automatically disable itself when the hand is no longer recognized, and re-enable when the hand is recognized again.
     public init(arView: ARView,
-                depthBufferSelection: DepthBufferSelection? = nil)
+                depthBufferSelection: DepthBufferSelection? = nil,
+                autoEnableInitially: Bool = true,
+                autoToggleContinually: Bool = true)
     {
         handTracker2D = .init(arView: arView)
 
         HandTracking3DSystem.arView = arView
 
+        self.autoEnableInitially = autoEnableInitially
+        
+        self.autoToggleContinually = autoToggleContinually
+        
         super.init()
+        
+        if autoEnableInitially {
+            isEnabled = false
+        }
 
         anchoring = .init(.world(transform: float4x4.init(diagonal: .one)))
 
