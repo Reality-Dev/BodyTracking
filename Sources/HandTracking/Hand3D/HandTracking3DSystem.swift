@@ -259,7 +259,7 @@ internal class HandTracking3DSystem: System {
             targetPosition = currentPosition + (currentPosition - targetPosition)
         }
         
-        var targetOrientation = simd_quatf(from: .forward, to: normalize(targetPosition - currentPosition))
+        var targetOrientation = simd_quatf(from: .forward, to: safeNormalize(targetPosition - currentPosition))
         
         if let offset {
             targetOrientation *= offset
@@ -278,14 +278,14 @@ internal class HandTracking3DSystem: System {
         let normalVector = cross(vector1, vector2)
 
         // Normalize the result to get a unit normal vector
-        return normalize(normalVector)
+        return safeNormalize(normalVector)
     }
     
     private func orientationFromVects(rootPoint: SIMD3<Float>,
                                   forwardPoint: SIMD3<Float>,
                                           upDirection: SIMD3<Float>) -> simd_quatf {
         
-        let forwardDirection = normalize(forwardPoint - rootPoint)
+        let forwardDirection = safeNormalize(forwardPoint - rootPoint)
 
         let quaternionForward = simd_quatf(from: .forward, to: forwardDirection)
 
@@ -399,4 +399,12 @@ internal class HandTracking3DSystem: System {
             handAnchor.handAnchorComponent.depthValues[jointName] = depth
         }
     }
+}
+
+public func safeNormalize(_ x: SIMD3<Float>) -> SIMD3<Float> {
+    var normalized = normalize(x)
+    if normalized.x.isNaN { normalized.x = 0 }
+    if normalized.y.isNaN { normalized.y = 0 }
+    if normalized.z.isNaN { normalized.z = 0 }
+    return normalized
 }
