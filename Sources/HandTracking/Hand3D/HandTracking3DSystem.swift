@@ -374,7 +374,7 @@ internal class HandTracking3DSystem: System {
         } else {
             // 2D screen positions are pretty good, but depth values are jittery, so they need smoothing.
             if let previousDepth {
-                depth = Float.lerp(previousDepth, depth, progress: 0.2)
+                depth = Float.lerp(previousDepth, depth, t: 0.2)
             }
             
             handAnchor.handAnchorComponent.depthValues[jointName] = depth

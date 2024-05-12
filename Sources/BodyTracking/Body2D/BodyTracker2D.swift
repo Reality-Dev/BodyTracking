@@ -43,10 +43,10 @@ public class BodyTracker2D: NSObject, HasBody2D {
     /// Allows only one view per joint.
     /// - This will add `thisView` to ARView automatically.
     /// - If you would like to attach more than one view per joint, then try attaching additional views to the view that is already attached to this joint.
-    public func attach(thisView: UIView, toThisJoint thisJoint: TwoDBodyJoint) {
-        body2D.trackedViews[thisJoint] = thisView
-        if thisView.superview == nil {
-            BodyTracking2DSystem.shared.arView?.addSubview(thisView)
+    public func attach(view: UIView, to joint: TwoDBodyJoint) {
+        body2D.trackedViews[joint] = view
+        if view.superview == nil {
+            BodyTracking2DSystem.shared.arView?.addSubview(view)
         }
     }
 
