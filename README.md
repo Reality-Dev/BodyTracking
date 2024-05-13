@@ -10,7 +10,7 @@ This package enables easy, convenient body tracking in RealityKit.
 
 ## Usage
 
-Course coming soon that includes expert guidance and examples.
+See [this downloadable](https://www.realityacademy.pro/course/body-tracking) that includes expert guidance and examples.
 
 ## What's Included
 
